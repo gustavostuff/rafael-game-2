@@ -9,7 +9,7 @@ function love.load()
   canvas:setFilter("nearest", "nearest")
 
   resolutionManager:init(canvas)
-  selectionScreen:load("pokemon/")
+  selectionScreen:init("pokemon/")
 
   font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
   love.graphics.setFont(font)

@@ -18,7 +18,7 @@ function getPokemonData(pokemonFile)
   return name, type
 end
 
-function selectionScreen:load(pokemonDirectory)
+function selectionScreen:init(pokemonDirectory)
   local pokemonFileList = love.filesystem.getDirectoryItems(pokemonDirectory)
 
   for i = 1, #pokemonFileList do
@@ -38,9 +38,9 @@ function selectionScreen:load(pokemonDirectory)
   self.selectionGridX = canvasWidth / 2 - self.selectionGridWidth / 2
   self.selectionGridY = canvasHeight / 2 - self.selectionGridHeight / 2
 
-  -- center correcly based on margin:
-  self.selectionGridX = self.selectionGridX + self.cellMargin / 2
-  self.selectionGridY = self.selectionGridY + self.cellMargin / 2
+  -- top-left corner:
+  self.selectionGridX = self.cellMargin / 2
+  self.selectionGridY = self.cellMargin / 2
 end
 
 function selectionScreen:draw()
@@ -96,7 +96,7 @@ function selectionScreen:draw()
     love.graphics.print(
       pokemonName,
       math.floor(self.selectionGridX + x + self.gridCellSize / 2 - font:getWidth(pokemonName) / 2),
-      math.floor(self.selectionGridY + y + self.gridCellSize - font:getHeight() * 1.5)
+      math.floor(self.selectionGridY + y + self.gridCellSize - font:getHeight() * 1.2)
     )
 
     rowIndex = rowIndex + 1
