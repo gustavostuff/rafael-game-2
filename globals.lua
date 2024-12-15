@@ -45,10 +45,10 @@ function drawColorPalette()
   local index = 1
   for name, value in pairs(colors) do
     love.graphics.setColor(colors.white)
-    love.graphics.print(name, 10, 10 + index * 20)
+    love.graphics.print(name, 830, 10 + index * 20)
 
     love.graphics.setColor(value)
-    love.graphics.rectangle('fill', 100, 10 + index * 20, 20, 20)
+    love.graphics.rectangle('fill', 800, 10 + index * 20, 20, 20)
 
     index = index + 1
   end
