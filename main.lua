@@ -33,7 +33,7 @@ function love.draw()
 	love.graphics.setCanvas()
 	love.graphics.setColor(colors.white)
 	resolutionManager:renderCanvas(canvas)
-  drawColorPalette()
+  -- drawColorPalette()
 end
 
 function love.keypressed(key)

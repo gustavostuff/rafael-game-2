@@ -66,11 +66,11 @@ function selectionScreen:drawPokemonGrid(cellOffset)
 
     -- Check if this pokemon is currently selected by cursor
     if (self.cursor.x) == pokemon.gridX and (self.cursor.y) == pokemon.gridY then
-      love.graphics.setColor(colors.mossGreen)
+      love.graphics.setColor(colors.darkGray)
       love.graphics.rectangle("fill", cellX, cellY, self.gridCellSize, self.gridCellSize, 4)
-      love.graphics.setColor(colors.white)
     end
-
+    
+    love.graphics.setColor(colors.white)
     love.graphics.draw(
       pokemon.image,
       math.floor(imgX), math.floor(imgY),
@@ -88,7 +88,7 @@ end
 
 function selectionScreen:drawDebugInfo()
   if self.debug then
-    love.graphics.setColor(colors.brickRed)
+    love.graphics.setColor(colors.darkRed)
     for rowIndex = 1, self.gridRows do
       for columnIndex = 1, self.gridColumns do
         local x = self.selectionGridX + (columnIndex - 1) * cellOffset
@@ -120,13 +120,19 @@ function selectionScreen:drawCurrentPokemonCard()
     -- print('pokemon type: ' .. pokemon.type)
     love.graphics.setColor(colors.white)
     if pokemon.type == "fire" then
-      love.graphics.setColor(colors.brickRed)
+      love.graphics.setColor(colors.darkRed)
     elseif pokemon.type == "water" then
       love.graphics.setColor(colors.skyBlue)
     elseif pokemon.type == "grass" then
-      love.graphics.setColor(colors.jungleGreen)
+      love.graphics.setColor(colors.darkGreen)
     elseif pokemon.type == "electric" then
       love.graphics.setColor(colors.mustard)
+    elseif pokemon.type == "dragon" then
+      love.graphics.setColor(colors.dragon)
+    elseif pokemon.type == "steel" then
+      love.graphics.setColor(colors.steelBlue)
+    elseif pokemon.type == "ice" then
+      love.graphics.setColor(colors.iceBlue)
     else
       love.graphics.setColor(colors.white)
     end
@@ -142,11 +148,16 @@ function selectionScreen:drawCurrentPokemonCard()
     love.graphics.setColor(colors.white)
     love.graphics.draw(pokemon.image,
       math.floor(cardX + cardWidth / 2),
-      math.floor(cardY + cardHeight * 0.25),
+      math.floor(cardY + cardHeight / 2),
       0, 1, 1,
       pokemon.image:getWidth() / 2,
       pokemon.image:getHeight() / 2
     )
+
+    local pokemonName = pokemon.name
+    local nameX = math.floor(cardX + 3)
+    local nameY = math.floor(cardY + 3)
+    love.graphics.print(pokemonName, nameX, nameY)
   end
 end
 

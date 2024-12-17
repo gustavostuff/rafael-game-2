@@ -5,41 +5,35 @@ canvasHeight = 360
 font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
 -- bigFont = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 32)
 
--- Generated with ChatGPT based on https://lospec.com/palette-list/dawnbringer-32
+local function hexToRgb(hex)
+  -- Remove the '#' if it exists
+  hex = hex:gsub("#", "")
+
+  local r = tonumber(hex:sub(1, 2), 16) / 255
+  local g = tonumber(hex:sub(3, 4), 16) / 255
+  local b = tonumber(hex:sub(5, 6), 16) / 255
+
+  return {r, g, b}
+end
+
 colors = {
-  black = {love.math.colorFromBytes(0, 0, 0)},
-  darkPurple = {love.math.colorFromBytes(34, 32, 52)},
-  coolBlue = {love.math.colorFromBytes(69, 127, 229)},
-  forestGreen = {love.math.colorFromBytes(102, 147, 147)},
-  lightGreen = {love.math.colorFromBytes(127, 180, 108)},
-
-  darkRed = {love.math.colorFromBytes(215, 18, 38)},
-  oliveGreen = {love.math.colorFromBytes(217, 150, 96)},
-  mustard = {love.math.colorFromBytes(239, 201, 64)},
-  teal = {love.math.colorFromBytes(191, 195, 239)},
-  slate = {love.math.colorFromBytes(153, 153, 153)},
-
-  jungleGreen = {love.math.colorFromBytes(106, 190, 48)},
-  mossGreen = {love.math.colorFromBytes(57, 125, 70)},
-  limeGreen = {love.math.colorFromBytes(181, 205, 56)},
-  skyBlue = {love.math.colorFromBytes(82, 188, 254)},
-  oceanBlue = {love.math.colorFromBytes(92, 159, 255)},
-
-  lightGrey = {love.math.colorFromBytes(205, 219, 220)},
-  white = {love.math.colorFromBytes(255, 255, 255)},
-  lavender = {love.math.colorFromBytes(155, 136, 183)},
-  coral = {love.math.colorFromBytes(105, 178, 48)},
-  deepPink = {love.math.colorFromBytes(101, 34, 103)},
-
-  grape = {love.math.colorFromBytes(89, 86, 112)},
-  clayRed = {love.math.colorFromBytes(234, 125, 120)},
-  brickRed = {love.math.colorFromBytes(210, 47, 118)},
-  wine = {love.math.colorFromBytes(216, 119, 123)},
-  darkMagenta = {love.math.colorFromBytes(216, 119, 123)},
-
-  darkForest = {love.math.colorFromBytes(137, 151, 116)},
-  brown = {love.math.colorFromBytes(168, 96, 48)}
+  black = hexToRgb("#000000"),
+  white = hexToRgb("#FFFFFF"),
+  green = hexToRgb("#00FF00"),
+  darkGreen = hexToRgb("#008000"),
+  blue = hexToRgb("#0000FF"),
+  darkBlue = hexToRgb("#000080"),
+  skyBlue = hexToRgb("#87CEEB"),
+  steelBlue = hexToRgb("#88ACD4"),
+  iceBlue = hexToRgb("#80eed1"),
+  red = hexToRgb("#FF0000"),
+  darkRed = hexToRgb("#800000"),
+  gray = hexToRgb("#808080"),
+  darkGray = hexToRgb("#404040"),
+  mustard = hexToRgb("#d9bc47"),
+  dragon = hexToRgb("#A5A8B5"),
 }
+
 
 function drawColorPalette()
   local index = 1
