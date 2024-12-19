@@ -1,4 +1,5 @@
 require 'globals'
+require 'text'
 keys = require 'keys'
 
 local selectionScreen = require 'selection-screen'
@@ -13,6 +14,8 @@ function love.load()
 
   font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
   love.graphics.setFont(font)
+  love.graphics.setLineWidth(4)
+  love.graphics.setLineStyle("rough")
 end
 
 function love.update(dt)
@@ -21,7 +24,7 @@ end
 
 function love.draw()
   love.graphics.setCanvas({canvas, depthstencil = true})
-	love.graphics.clear(colors.black)
+	love.graphics.clear(colors.dark)
 
   ---------------------------------------------------------------
 

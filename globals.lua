@@ -1,6 +1,7 @@
 defaultCanvasScale = 3
-canvasWidth = 640
-canvasHeight = 360
+canvasWidth = 320
+canvasHeight = 180
+lineHeight = 1.2
 
 font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
 -- bigFont = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 32)
@@ -19,6 +20,8 @@ end
 colors = {
   black = hexToRgb("#000000"),
   white = hexToRgb("#FFFFFF"),
+  dark = hexToRgb("#222034"),
+  almostWhite = hexToRgb("#F0F0F0"),
   green = hexToRgb("#00FF00"),
   darkGreen = hexToRgb("#008000"),
   blue = hexToRgb("#0000FF"),
@@ -34,6 +37,9 @@ colors = {
   dragon = hexToRgb("#A5A8B5"),
 }
 
+function toCapitalCase(str)
+  return str:gsub("^%l", string.upper)
+end
 
 function drawColorPalette()
   local index = 1
