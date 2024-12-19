@@ -30,7 +30,6 @@ function love.draw()
 
   selectionScreen:draw()
 
-  
   ---------------------------------------------------------------
   
 	love.graphics.setCanvas()

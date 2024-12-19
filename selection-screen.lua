@@ -39,6 +39,8 @@ local function getPokemonColor(pokemonType)
     return colors.steelBlue
   elseif pokemonType == "ice" then
     return colors.iceBlue
+  elseif pokemonType == "ghost" then
+    return colors.purple
   else
     return colors.white
   end
@@ -227,12 +229,16 @@ end
 
 function selectionScreen:changecursor(direction)
   if direction == "up" then
+    if not self.pokemonItems[self.cursor.x .. "-" .. self.cursor.y - 1] then return end
     self.cursor.y = self.cursor.y - 1
   elseif direction == "down" then
+    if not self.pokemonItems[self.cursor.x .. "-" .. self.cursor.y + 1] then return end
     self.cursor.y = self.cursor.y + 1
   elseif direction == "left" then
+    if not self.pokemonItems[self.cursor.x - 1 .. "-" .. self.cursor.y] then return end
     self.cursor.x = self.cursor.x - 1
   elseif direction == "right" then
+    if not self.pokemonItems[self.cursor.x + 1 .. "-" .. self.cursor.y] then return end
     self.cursor.x = self.cursor.x + 1
   end
 

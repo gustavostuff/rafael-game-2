@@ -1,6 +1,6 @@
-defaultCanvasScale = 3
-canvasWidth = 320
-canvasHeight = 180
+defaultCanvasScale = 1
+canvasWidth = 320 * defaultCanvasScale
+canvasHeight = 180 * defaultCanvasScale
 lineHeight = 1.2
 
 font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
@@ -35,6 +35,7 @@ colors = {
   darkGray = hexToRgb("#404040"),
   mustard = hexToRgb("#d9bc47"),
   dragon = hexToRgb("#A5A8B5"),
+  purple = hexToRgb("#9473b4"),
 }
 
 function toCapitalCase(str)
