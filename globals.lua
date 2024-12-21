@@ -33,7 +33,7 @@ colors = {
   darkRed = hexToRgb("#800000"),
   gray = hexToRgb("#808080"),
   darkGray = hexToRgb("#404040"),
-  mustard = hexToRgb("#d9bc47"),
+  yellow = hexToRgb("#cfc953"),
   dragon = hexToRgb("#A5A8B5"),
   purple = hexToRgb("#9473b4"),
 }
