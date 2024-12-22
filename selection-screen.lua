@@ -12,11 +12,13 @@ function selectionScreen:init(pokemonDirectory)
   -- 1) Init the grid module
   pokemonGrid.debug = self.debug
   pokemonGrid:init(pokemonDirectory)
+  self.pokemonGrid = pokemonGrid
 
   -- 2) Init the card module
   --    Suppose we have a global or passed-in canvas size:
   local w, h = canvasWidth, canvasHeight
   pokemonCard:init(w, h)
+  self.pokemonCard = pokemonCard
 
   -- Grab the initially selected Pokémon from the grid
   local firstSelection = pokemonGrid:getSelectedPokemon()

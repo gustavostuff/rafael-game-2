@@ -131,6 +131,29 @@ function pokemonGrid:drawDebugInfo()
   love.graphics.setColor(colors.white)
 end
 
+function pokemonGrid:isGoingDownToEmptyCell(direction)
+  if direction ~= "down" then return false end
+
+  local y = self.cursor.y
+  if y == self.gridRows - 1 and self.pokemonItems[self.cursor.x .. "-" .. y + 1] == nil then
+    return true
+  end
+end
+
+function pokemonGrid:getEmptyCellsCount()
+  return (self.gridRows * self.gridColumns) % tableLength(self.pokemonItems)
+end
+
+
+function pokemonGrid:movingRightToEmptyCell(direction)
+  local x, y = self.cursor.x, self.cursor.y
+
+  return (self:getEmptyCellsCount(direction) > 0) and
+    y == self.gridRows and
+    direction == 'right' and
+    self.pokemonItems[(x + 1) .. "-" .. y] == nil
+end
+
 -- Move the cursor up/down/left/right
 function pokemonGrid:changecursor(direction)
   local x, y = self.cursor.x, self.cursor.y
@@ -138,6 +161,25 @@ function pokemonGrid:changecursor(direction)
   elseif direction == "down"  then y = y + 1
   elseif direction == "left"  then x = x - 1
   elseif direction == "right" then x = x + 1
+  end
+
+  -- handle last row what may contain empty cells
+  if self:isGoingDownToEmptyCell(direction) then
+    -- select the last item in the list
+    self.cursor = {
+      x = self.gridColumns - self:getEmptyCellsCount(),
+      y = self.gridRows
+    }
+    return
+  end
+
+  -- handle moving right from the last item (when there are empty cells)
+  if self:movingRightToEmptyCell(direction) then
+    self.cursor = {
+      x = x,
+      y = y - 1
+    }
+    return
   end
 
   -- If new position is valid, update cursor

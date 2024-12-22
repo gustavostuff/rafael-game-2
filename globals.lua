@@ -38,6 +38,18 @@ colors = {
   purple = hexToRgb("#9473b4"),
 }
 
+function tableLength(t, flat)
+  if flat then
+    return #t
+  else
+    local count = 0
+    for _ in pairs(t) do
+      count = count + 1
+    end
+    return count
+  end
+end
+
 function toCapitalCase(str)
   return str:gsub("^%l", string.upper)
 end
