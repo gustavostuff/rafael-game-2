@@ -1,9 +1,10 @@
--- _G.debug = true
+-- _G.loveDebug = true
 
 require 'globals'
 require 'text'
 keys = require 'keys'
 
+local gameStateManager = require 'game-state-manager'
 local selectionScreen = require 'selection-screen'
 local resolutionManager = require 'resolution-manager'
 
@@ -19,14 +20,23 @@ function love.load()
   love.graphics.setFont(font)
   love.graphics.setLineWidth(4)
   love.graphics.setLineStyle("rough")
+
+  titleScreen = love.graphics.newImage('title-screen.png')
+
+  love.audio.setVolume(0.5)
+  bgMusic = love.audio.newSource('bg-music.ogg', 'stream')
+  bgMusic:setLooping(true)
+  bgMusic:play()
+
+  gameStateManager:init()
 end
 
 function love.update(dt)
-
+  gameStateManager:update(dt)
 end
 
 function printDebugInfo()
-  if not debug then return end
+  if not loveDebug then return end
 
   local cursor = selectionScreen.pokemonGrid.cursor
   local viewport = selectionScreen.pokemonGrid.verticalViewport
@@ -57,7 +67,12 @@ function love.draw()
 
   ---------------------------------------------------------------
 
-  selectionScreen:draw()
+  if gameStateManager.gameState == gameStateManager.states.TITLE_SCREEN then
+    love.graphics.draw(titleScreen, 0, 0)
+  elseif gameStateManager.gameState == gameStateManager.states.GAME then
+    selectionScreen:draw()
+  end
+  gameStateManager:draw()
   
   ---------------------------------------------------------------
   
@@ -73,7 +88,13 @@ function love.keypressed(key)
     love.event.quit()
   end
 
-  selectionScreen:keypressed(key)
+  if gameStateManager.gameState == gameStateManager.states.TITLE_SCREEN then
+    if keys.isEnterKey(key) then
+      gameStateManager:transitionTo(gameStateManager.states.GAME)
+    end
+  elseif gameStateManager.gameState == gameStateManager.states.GAME then
+    selectionScreen:keypressed(key)
+  end
 end
 
 function love.resize(w, h)
