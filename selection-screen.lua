@@ -1,46 +1,50 @@
 -- selectionScreen.lua
+
 local resolutionManager = require 'resolution-manager'
-local pokemonGrid  = require 'pokemon-grid'
-local pokemonCard  = require 'pokemon-card'
+local pokemonGrid       = require 'pokemon-grid'
+local pokemonCard       = require 'pokemon-card'
 
-local selectionScreen = {
-  -- If you want to enable debugging for the grid
-  debug = false
-}
+local selectionScreen = { debug = false }
 
-function selectionScreen:init(pokemonDirectory)
-  -- 1) Init the grid module
+function selectionScreen:init(d)
   pokemonGrid.debug = self.debug
-  pokemonGrid:init(pokemonDirectory)
+  pokemonGrid:init(d)
   self.pokemonGrid = pokemonGrid
 
-  -- 2) Init the card module
-  --    Suppose we have a global or passed-in canvas size:
   local w, h = canvasWidth, canvasHeight
-  pokemonCard:init(w, h)
-  self.pokemonCard = pokemonCard
 
-  -- Grab the initially selected Pokémon from the grid
-  local firstSelection = pokemonGrid:getSelectedPokemon()
-  pokemonCard:setPokemon(firstSelection)
+  self.pokemonCardP1 = pokemonCard.new(135, 20)
+
+  self.pokemonCardP2 = pokemonCard.new(135, 90)
+
+  -- Offset card 2 so they are not in the same place
+  self.pokemonCardP2.cardX = self.pokemonCardP2.cardX - 200
+
+  local s1 = self.pokemonGrid:getSelectedPokemon("p1")
+  local s2 = self.pokemonGrid:getSelectedPokemon("p2")
+  self.pokemonCardP1:setPokemon(s1)
+  self.pokemonCardP2:setPokemon(s2)
 end
 
 function selectionScreen:draw()
   love.graphics.setColor(colors.white)
-  pokemonGrid:drawGrid()
-  pokemonCard:draw()
-  pokemonGrid:drawDebugInfo()
+  self.pokemonGrid:drawGrid()
+  self.pokemonCardP1:draw()
+  self.pokemonCardP2:draw()
+  self.pokemonGrid:drawDebugInfo()
 end
 
-function selectionScreen:keypressed(key)
-  -- Let the grid handle cursor changes
-  if keys.isAnyOf(key, {"up", "down", "left", "right"}) then
-    pokemonGrid:changecursor(key)
-    pokemonGrid:updateViewport()
-
-    -- Update the card with the new selection
-    local newSelection = pokemonGrid:getSelectedPokemon()
-    pokemonCard:setPokemon(newSelection)
+function selectionScreen:keypressed(k)
+  if keys.isAnyOf(k, { "w", "a", "s", "d" }) then
+    self.pokemonGrid:changecursor("p1", k)
+    self.pokemonGrid:updateViewport("p1")
+    local s = self.pokemonGrid:getSelectedPokemon("p1")
+    self.pokemonCardP1:setPokemon(s)
+  elseif keys.isAnyOf(k, { "up", "down", "left", "right" }) then
+    self.pokemonGrid:changecursor("p2", k)
+    self.pokemonGrid:updateViewport("p2")
+    local s = self.pokemonGrid:getSelectedPokemon("p2")
+    self.pokemonCardP2:setPokemon(s)
   end
 end
 
