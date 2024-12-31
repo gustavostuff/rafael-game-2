@@ -2,12 +2,14 @@
 local pokemonGrid = {
   gridRows      = 4,
   gridColumns   = 5,
+  gridPadding   = 5,
   gridCellSize  = 20,
   cellMargin    = 8,
   cursor        = { x = 1, y = 1 },
   verticalViewport = { y0 = 1, y1 = 4 },
   pokemonItems  = {},   -- Will hold all Pokémon loaded
-  debug         = false -- Optionally toggle debug
+  debug         = false, -- Optionally toggle debug
+  currentPlayer = 1,
 }
 
 local function getNumbersFromStringCoords(coords)
@@ -60,7 +62,7 @@ function pokemonGrid:init(pokemonDirectory)
   self.selectionGridWidth  = self.gridColumns * self.cellOffset
   self.selectionGridHeight = self.gridRows    * self.cellOffset
   self.selectionGridX      = 20
-  self.selectionGridY      = 20
+  self.selectionGridY      = 21
 end
 
 -- Helper: convert from (gridX, gridY) to actual screen position
@@ -79,7 +81,14 @@ end
 
 -- Draw the grid and highlight the cursor
 function pokemonGrid:drawGrid()
-  -- love.graphics.setColor(colors.colorWithAlpha("black", 0.5))
+  -- love.graphics.setColor(colorWithAlpha("black", 0.5))
+  -- love.graphics.rectangle("fill",
+  --   self.selectionGridX - self.gridPadding - 2,
+  --   self.selectionGridY - self.gridPadding - 2,
+  --   self.selectionGridWidth + 5,
+  --   152,
+  --   4
+  -- )
   for _, pokemon in pairs(self.pokemonItems) do
     if self:isInsideViewport(pokemon) then
       local cellX, cellY = getCellCoordinates(self, pokemon.gridX, pokemon.gridY)
@@ -117,6 +126,9 @@ function pokemonGrid:drawGrid()
       love.graphics.setStencilTest()
     end
   end
+
+  love.graphics.setColor(colors.white)
+  love.graphics.print('Player ' .. self.currentPlayer ..' selection', 20, 5)
 end
 
 -- Show helpful debug rectangles
@@ -194,6 +206,11 @@ end
 -- Let external code call this once the cursor changes
 function pokemonGrid:getSelectedPokemon()
   return self.pokemonItems[self.cursor.x .. "-" .. self.cursor.y]
+end
+
+function pokemonGrid:setSelectedPokemon(x, y)
+  self.cursor.x = x
+  self.cursor.y = y
 end
 
 -- For viewport scrolling

@@ -30,6 +30,8 @@ local function getPokemonColor(pokemonType)
   elseif pokemonType == "steel"    then return colors.steelBlue
   elseif pokemonType == "ice"      then return colors.iceBlue
   elseif pokemonType == "ghost"    then return colors.purple
+  elseif pokemonType == "normal"   then return colors.skin
+  elseif pokemonType == "rock"     then return colors.ground
   elseif pokemonType == "psychic"  then return colors.pink
   else                                  return colors.white
   end

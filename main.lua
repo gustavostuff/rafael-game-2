@@ -40,9 +40,11 @@ function printDebugInfo()
 
   local cursor = selectionScreen.pokemonGrid.cursor
   local viewport = selectionScreen.pokemonGrid.verticalViewport
+  local mouse = resolutionManager:getScaledMouse(love.mouse.getPosition())
 
   local items = {
     'FPS ' .. love.timer.getFPS(),
+    'Mouse scaled: ' .. math.floor(mouse.x) .. ', ' .. math.floor(mouse.y),
     'Canvas size: ' .. resolutionManager.canvasWidth .. 'x' .. resolutionManager.canvasHeight,
     'Canvas scale: ' .. resolutionManager.canvasScaleX .. 'x' .. resolutionManager.canvasScaleY,
     'Canvas position: ' .. resolutionManager.canvasX .. 'x' .. resolutionManager.canvasY,
@@ -69,7 +71,11 @@ function love.draw()
 
   if gameStateManager.gameState == gameStateManager.states.TITLE_SCREEN then
     love.graphics.draw(titleScreen, 0, 0)
-  elseif gameStateManager.gameState == gameStateManager.states.GAME then
+  elseif gameStateManager.gameState == gameStateManager.states.SELECTION_SCREEN_P1 then
+    selectionScreen:draw()
+  elseif gameStateManager.gameState == gameStateManager.states.SELECTION_SCREEN_P2 then
+    selectionScreen:draw()
+  elseif gameStateManager.gameState == gameStateManager.states.CONFIRM_SELECTION then
     selectionScreen:draw()
   end
   gameStateManager:draw()
@@ -88,12 +94,16 @@ function love.keypressed(key)
     love.event.quit()
   end
 
+  if key == 'f12' then
+    loveDebug = not loveDebug
+  end
+
   if gameStateManager.gameState == gameStateManager.states.TITLE_SCREEN then
     if keys.isEnterKey(key) then
-      gameStateManager:transitionTo(gameStateManager.states.GAME)
+      gameStateManager:transitionTo(gameStateManager.states.SELECTION_SCREEN_P1)
     end
-  elseif gameStateManager.gameState == gameStateManager.states.GAME then
-    selectionScreen:keypressed(key)
+  else
+    selectionScreen:keypressed(key, gameStateManager.gameState)
   end
 end
 

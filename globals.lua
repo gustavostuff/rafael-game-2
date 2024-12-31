@@ -36,7 +36,9 @@ colors = {
   yellow = hexToRgb("#cfc953"),
   dragon = hexToRgb("#A5A8B5"),
   purple = hexToRgb("#9473b4"),
-  pink = hexToRgb("#bd63a2")
+  pink = hexToRgb("#bd63a2"),
+  skin = hexToRgb("#fee2cd"),
+  ground = hexToRgb("#988a7f"),
 }
 
 function tableLength(t, flat)

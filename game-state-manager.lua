@@ -5,7 +5,8 @@ local gameStateManager = {
   fadeOutDelay = 0.3,
   states = {
     TITLE_SCREEN = 1,
-    GAME = 2
+    SELECTION_SCREEN_P1 = 2,
+    SELECTION_SCREEN_P2 = 3
   },
   active = false,
   cb = nil
