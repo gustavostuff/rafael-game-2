@@ -7,6 +7,7 @@ keys = require 'keys'
 local gameStateManager = require 'game-state-manager'
 local selectionScreen = require 'selection-screen'
 local resolutionManager = require 'resolution-manager'
+local pingPongManager = require 'ping-pong-manager'
 
 function love.load()
   canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
@@ -29,10 +30,15 @@ function love.load()
   bgMusic:play()
 
   gameStateManager:init()
+  pingPongManager:init(love.graphics.newImage('other/pokeball.png'))
 end
 
 function love.update(dt)
   gameStateManager:update(dt)
+
+  if gameStateManager:stateIs(gameStateManager.states.GAME) then
+    pingPongManager:update(dt)
+  end
 end
 
 function printDebugInfo()
@@ -77,6 +83,14 @@ function love.draw()
     selectionScreen:draw()
   elseif gameStateManager.gameState == gameStateManager.states.CONFIRM_SELECTION then
     selectionScreen:draw()
+    love.graphics.setColor(colorWithAlpha("black", 0.5))
+    love.graphics.rectangle("fill", 0, 0, canvasWidth, canvasHeight)
+
+    love.graphics.setColor(colors.white)
+    local text = "Are you ready?"
+    love.graphics.print(text, (canvasWidth - font:getWidth(text)) / 2, (canvasHeight - font:getHeight()) / 2)
+  elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
+    pingPongManager:draw()
   end
   gameStateManager:draw()
   
@@ -101,6 +115,14 @@ function love.keypressed(key)
   if gameStateManager.gameState == gameStateManager.states.TITLE_SCREEN then
     if keys.isEnterKey(key) then
       gameStateManager:transitionTo(gameStateManager.states.SELECTION_SCREEN_P1)
+    end
+  elseif gameStateManager.gameState == gameStateManager.states.CONFIRM_SELECTION then
+    if keys.isEnterKey(key) then
+      gameStateManager:transitionTo(gameStateManager.states.GAME)
+    end
+  elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
+    if key == 'space' then
+      pingPongManager:launchBall()
     end
   else
     selectionScreen:keypressed(key, gameStateManager.gameState)

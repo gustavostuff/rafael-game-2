@@ -6,7 +6,9 @@ local gameStateManager = {
   states = {
     TITLE_SCREEN = 1,
     SELECTION_SCREEN_P1 = 2,
-    SELECTION_SCREEN_P2 = 3
+    SELECTION_SCREEN_P2 = 3,
+    CONFIRM_SELECTION = 4,
+    GAME = 5,
   },
   active = false,
   cb = nil
@@ -14,6 +16,7 @@ local gameStateManager = {
 
 function gameStateManager:init()
   self.gameState = self.states.TITLE_SCREEN
+  -- self.gameState = self.states.GAME
 end
 
 function gameStateManager:transitionTo(state, cb)
@@ -27,6 +30,10 @@ function gameStateManager:transitionTo(state, cb)
   self.fadeOutTimer = 0
   self.nextState = state
   self.cb = cb -- what happens after the state transition is done
+end
+
+function gameStateManager:stateIs(state)
+  return self.gameState == state
 end
 
 function gameStateManager:update(dt)

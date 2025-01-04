@@ -85,6 +85,7 @@ function selectionScreen:keypressed(key, gameState)
       gameStateManager:transitionTo(gameStateManager.states.SELECTION_SCREEN_P2, function ()
         self.selectedPokemon['player' .. self.pokemonGrid.currentPlayer] = self.pokemonGrid:getSelectedPokemon()
         self.pokemonGrid:setSelectedPokemon(1, 1)
+        self.pokemonGrid.verticalViewport = { y0 = 1, y1 = 4 }
         self.pokemonCard:setPokemon(self.pokemonGrid:getSelectedPokemon())
         self.pokemonGrid.currentPlayer = 2
       end)
