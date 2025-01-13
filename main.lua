@@ -30,7 +30,9 @@ function love.load()
   bgMusic:play()
 
   gameStateManager:init()
-  pingPongManager:init(love.graphics.newImage('other/pokeball.png'))
+  local ballImg = love.graphics.newImage('other/pokeball.png')
+  local paddleImg = love.graphics.newImage('other/paddle.png')
+  pingPongManager:init(ballImg, paddleImg)
 end
 
 function love.update(dt)
@@ -124,11 +126,21 @@ function love.keypressed(key)
     if key == 'space' then
       pingPongManager:launchBall()
     end
+    if keys.isAnyOf(key, {'up', 'down', 'w', 's'}) then
+      pingPongManager:keypressed(key)
+    end
   else
     selectionScreen:keypressed(key, gameStateManager.gameState)
   end
 end
 
+function love.keyreleased(key)
+  if gameStateManager:stateIs(gameStateManager.states.GAME) then
+    if keys.isAnyOf(key, {'up', 'down', 'w', 's'}) then
+      pingPongManager:keyreleased(key)
+    end
+  end
+end
 function love.resize(w, h)
 	resolutionManager:recalculate()
 end
