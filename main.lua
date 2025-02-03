@@ -7,6 +7,7 @@ keys = require 'keys'
 local gameStateManager = require 'game-state-manager'
 local selectionScreen = require 'selection-screen'
 local resolutionManager = require 'resolution-manager'
+local scoreManager = require 'score-manager'
 local pingPongManager = require 'ping-pong-manager'
 
 function love.load()
@@ -93,6 +94,7 @@ function love.draw()
     love.graphics.print(text, (canvasWidth - font:getWidth(text)) / 2, (canvasHeight - font:getHeight()) / 2)
   elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
     pingPongManager:draw()
+    scoreManager:draw()
   end
   gameStateManager:draw()
   

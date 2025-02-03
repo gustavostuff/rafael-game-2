@@ -1,4 +1,5 @@
 local bb = require 'lib.boinboin'
+local scoreManager = require 'score-manager'
 local pingPongManager = {
   fieldWidth = 180,
   fieldHeight = 180 - 20,
@@ -13,7 +14,7 @@ function pingPongManager:init(ballImg, paddleImg)
   self.fieldY = 10
 
   self.playerOnePaddle = {
-    x = self.fieldX,
+    x = self.fieldX - self.paddleImg:getWidth(),
     y = self.fieldY,
   }
   self.playerTwoPaddle = {
@@ -31,11 +32,32 @@ function pingPongManager:init(ballImg, paddleImg)
     w = self.fieldWidth,
     h = self.fieldHeight
   })
+  self:initBall(self.box)
+
+  bb.onEvent = function(evt)
+    if evt.type == 'rebound-left' or evt.type == 'rebound-right' then
+      -- scoreManager:increasePlayerScore(evt.type == 'rebound-left' and 'player2' or 'player1')
+      if evt.type == 'rebound-left' then
+        if self:pointAgainst('player1', evt) then
+          scoreManager:increasePlayerScore('player2')
+          self:initBall(self.box)
+        end
+      elseif evt.type == 'rebound-right' then
+        if self:pointAgainst('player2', evt) then
+          scoreManager:increasePlayerScore('player1')
+          self:initBall(self.box)
+        end
+      end
+    end
+  end
+end
+
+function pingPongManager:initBall(box)
   self.ball = bb.newBall({
-    x = 180 / 2,
-    y = 180 / 2,
+    x = self.fieldWidth / 2,
+    y = self.fieldHeight / 2,
     r = 6,
-    box = self.box,
+    box = box,
     hv = 80,
     vv = 90,
     energyLossByBounce = 0,
@@ -43,14 +65,14 @@ function pingPongManager:init(ballImg, paddleImg)
   })
 end
 
+function pingPongManager:pointAgainst(player, evt)
+  local paddle = player == 'player1' and self.playerOnePaddle or self.playerTwoPaddle
+  
+  return not (evt.y >= paddle.y and evt.y <= paddle.y + self.paddleImg:getHeight())
+end
+
 function pingPongManager:update(dt)
-  bb.updateBall(self.ball, dt, function (evt)
-    if evt.type == 'rebound' then
-      --
-    elseif evt.type == 'stray' then
-      --
-    end
-  end)
+  bb.updateBall(self.ball, dt)
 
   -- move paddles
   local leftPaddleDirection = love.keyboard.isDown(keys.w) and -1 or 1
@@ -65,8 +87,21 @@ function pingPongManager:update(dt)
   end
 
   -- correct out of bounds paddles
-  self.playerOnePaddle.y = math.min(math.max(self.playerOnePaddle.y, self.fieldY), self.fieldY + self.fieldHeight)
-  self.playerTwoPaddle.y = math.min(math.max(self.playerTwoPaddle.y, self.fieldY), self.fieldY + self.fieldHeight)
+  self.playerOnePaddle.y = math.min(
+    math.max(
+      self.playerOnePaddle.y,
+      self.fieldY
+    ),
+      self.fieldY + self.fieldHeight - self.paddleImg:getHeight()
+    )
+  
+  self.playerTwoPaddle.y = math.min(
+    math.max(
+      self.playerTwoPaddle.y,
+      self.fieldY
+    ),
+      self.fieldY + self.fieldHeight - self.paddleImg:getHeight()
+    )
 end
 
 function pingPongManager:draw()
@@ -81,11 +116,12 @@ function pingPongManager:draw()
   love.graphics.setColor(colors.white)
   -- bb.drawDebug()
 
+  -- draw ball
   love.graphics.setColor(colors.white)
   love.graphics.draw(
     self.ballImg,
-    math.floor(self.ball.x),
-    math.floor(self.ball.y)
+    math.floor(self.ball.x - self.ball.r),
+    math.floor(self.ball.y - self.ball.r)
   )
 
   -- draw paddles

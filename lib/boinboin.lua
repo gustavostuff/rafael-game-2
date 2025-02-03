@@ -142,7 +142,7 @@ local checkForLeft = function (ball, cornerCheck)
   if ball:isBeyondLeft() then
     local newX, newY = getIntersection(getPairOfLines(ball, ball.r, 0, ball.r, bx.h))
     addFpBall(newX, newY, ball.r, 'corrected')
-    bb.emitEvent({ name = 'rebound', x = newX, y = newY })
+    bb.emitEvent({ type = 'rebound-left', x = newX, y = newY })
     ball.previousX, ball.previousY = newX, newY
     addFpBall(calculateReboundProjection('left', newX, newY, ball))
   end
@@ -153,7 +153,7 @@ local checkForRight = function (ball, cornerCheck)
   if ball:isBeyondRight() then
     local newX, newY = getIntersection(getPairOfLines(ball, bx.w - ball.r, 0, bx.w - ball.r, bx.h))
     addFpBall(newX, newY, ball.r, 'corrected')
-    bb.emitEvent({ name = 'rebound', x = newX, y = newY })
+    bb.emitEvent({ type = 'rebound-right', x = newX, y = newY })
     ball.previousX, ball.previousY = newX, newY
     addFpBall(calculateReboundProjection('right', newX, newY, ball))
   end
