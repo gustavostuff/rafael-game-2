@@ -10,12 +10,20 @@ local resolutionManager = require 'resolution-manager'
 local scoreManager = require 'score-manager'
 local pingPongManager = require 'ping-pong-manager'
 
+local function getPokemonByName(name, list)
+  for _, pokemon in pairs(list) do
+    if pokemon.name == name then
+      return pokemon
+    end
+  end
+end
+
 function love.load()
   canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
   canvas:setFilter("nearest", "nearest")
 
   resolutionManager:init(canvas)
-  selectionScreen:init("pokemon/")
+  pokemonItems = selectionScreen:init("pokemon/")
 
   font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
   bigFont = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 32)
@@ -93,6 +101,31 @@ function love.draw()
     local text = "Are you ready?"
     love.graphics.print(text, (canvasWidth - font:getWidth(text)) / 2, (canvasHeight - font:getHeight()) / 2)
   elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
+    local pokemonPlayer1 = getPokemonByName(selectionScreen.selectedPokemon['player1'].name, pokemonItems)
+    local pokemonPlayer2 = getPokemonByName(selectionScreen.selectedPokemon['player2'].name, pokemonItems)
+
+    love.graphics.setColor(colors.white)
+    love.graphics.draw(
+      pokemonPlayer1.image,
+      36,
+      canvasHeight / 2,
+      0,
+      -1,
+      1,
+      pokemonPlayer1.facePosition.x,
+      pokemonPlayer1.facePosition.y
+    )
+    love.graphics.draw(
+      pokemonPlayer2.image,
+      canvasWidth - 36,
+      canvasHeight / 2,
+      0,
+      1,
+      1,
+      pokemonPlayer2.facePosition.x,
+      pokemonPlayer2.facePosition.y
+    )
+
     pingPongManager:draw()
     scoreManager:draw()
   end

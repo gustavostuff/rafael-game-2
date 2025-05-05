@@ -63,6 +63,8 @@ function pokemonGrid:init(pokemonDirectory)
   self.selectionGridHeight = self.gridRows    * self.cellOffset
   self.selectionGridX      = 20
   self.selectionGridY      = 21
+
+  return self.pokemonItems
 end
 
 -- Helper: convert from (gridX, gridY) to actual screen position

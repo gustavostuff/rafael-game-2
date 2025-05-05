@@ -13,7 +13,7 @@ local selectionScreen = {
 function selectionScreen:init(pokemonDirectory)
   -- 1) Init the grid module
   pokemonGrid.debug = self.debug
-  pokemonGrid:init(pokemonDirectory)
+  local pokemonItems = pokemonGrid:init(pokemonDirectory)
   self.pokemonGrid = pokemonGrid
 
   -- 2) Init the card module
@@ -25,6 +25,8 @@ function selectionScreen:init(pokemonDirectory)
   -- Grab the initially selected Pokémon from the grid
   local firstSelection = pokemonGrid:getSelectedPokemon()
   pokemonCard:setPokemon(firstSelection)
+
+  return pokemonItems
 end
 
 function selectionScreen:drawSelectedPokemon(playerNumber)
