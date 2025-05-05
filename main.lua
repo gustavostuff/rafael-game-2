@@ -42,6 +42,8 @@ function love.load()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
   pingPongManager:init(ballImg, paddleImg)
+
+  lifeIndicator = love.graphics.newImage('other/life_indicator.png')
 end
 
 function love.update(dt)
@@ -104,6 +106,7 @@ function love.draw()
     local pokemonPlayer1 = getPokemonByName(selectionScreen.selectedPokemon['player1'].name, pokemonItems)
     local pokemonPlayer2 = getPokemonByName(selectionScreen.selectedPokemon['player2'].name, pokemonItems)
 
+    -- draw pokemon
     love.graphics.setColor(colors.white)
     love.graphics.draw(
       pokemonPlayer1.image,
@@ -125,6 +128,12 @@ function love.draw()
       pokemonPlayer2.facePosition.x,
       pokemonPlayer2.facePosition.y
     )
+
+    -- draw life bar:
+
+    love.graphics.setColor(colors.white)
+    love.graphics.draw(lifeIndicator, 5, canvasHeight - 10)
+    love.graphics.draw(lifeIndicator, canvasWidth - lifeIndicator:getWidth() - 5, canvasHeight - 10)
 
     pingPongManager:draw()
     scoreManager:draw()

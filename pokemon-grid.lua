@@ -47,6 +47,7 @@ function pokemonGrid:init(pokemonDirectory)
         name         = pData.name,
         type         = pData.type,
         image        = image,
+        life         = 11,
         gridX        = col,
         gridY        = row,
         facePosition = pData.facePosition,
