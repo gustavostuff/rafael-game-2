@@ -9,6 +9,7 @@ local selectionScreen = require 'selection-screen'
 local resolutionManager = require 'resolution-manager'
 local scoreManager = require 'score-manager'
 local pingPongManager = require 'ping-pong-manager'
+local timerManager = require 'timer-manager'
 
 local function getPokemonByName(name, list)
   for _, pokemon in pairs(list) do
@@ -16,6 +17,55 @@ local function getPokemonByName(name, list)
       return pokemon
     end
   end
+end
+
+local attackImages = {}
+local attackEffect = {
+  visible = false,
+  player = nil,
+  img = nil,
+  flipY = false,
+  timeoutId = nil,
+  oscillateId = nil
+}
+
+local function getAttackImage(typeName)
+  if not attackImages[typeName] then
+    attackImages[typeName] = love.graphics.newImage('attacks/' .. typeName .. '.png')
+  end
+  return attackImages[typeName]
+end
+
+local function triggerAttack(player)
+  local selected = selectionScreen.selectedPokemon[player]
+  if not selected or not selected.type then return end
+
+  if attackEffect.timeoutId then
+    timerManager:cancel(attackEffect.timeoutId)
+  end
+  if attackEffect.oscillateId then
+    timerManager:cancel(attackEffect.oscillateId)
+  end
+
+  attackEffect.player = player
+  attackEffect.img = getAttackImage(selected.type)
+  attackEffect.visible = true
+  attackEffect.flipY = false
+
+  attackEffect.oscillateId = timerManager:every(0.25, function()
+    attackEffect.flipY = not attackEffect.flipY
+  end)
+
+  attackEffect.timeoutId = timerManager:after(1, function()
+    if attackEffect.oscillateId then
+      timerManager:cancel(attackEffect.oscillateId)
+      attackEffect.oscillateId = nil
+    end
+    attackEffect.timeoutId = nil
+    attackEffect.visible = false
+    attackEffect.player = nil
+    attackEffect.img = nil
+  end)
 end
 
 function love.load()
@@ -41,7 +91,7 @@ function love.load()
   gameStateManager:init()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
-  pingPongManager:init(ballImg, paddleImg)
+  pingPongManager:init(ballImg, paddleImg, triggerAttack)
 
   lifeIndicator = love.graphics.newImage('other/life_indicator.png')
 end
@@ -51,6 +101,7 @@ function love.update(dt)
 
   if gameStateManager:stateIs(gameStateManager.states.GAME) then
     pingPongManager:update(dt)
+    timerManager:update()
   end
 end
 
@@ -137,6 +188,30 @@ function love.draw()
 
     pingPongManager:draw()
     scoreManager:draw()
+
+    if attackEffect.visible and attackEffect.img and attackEffect.player then
+      local faceX = attackEffect.player == 'player1' and 36 or canvasWidth - 36
+      local faceY = canvasHeight / 2
+      local attackOffset = 20
+      local attackScaleX = 1
+      local attackScaleY = attackEffect.flipY and -1 or 1
+
+      if attackEffect.player == 'player2' then
+        attackScaleX = -1
+        attackOffset = -attackOffset
+      end
+
+      love.graphics.draw(
+        attackEffect.img,
+        math.floor(faceX + attackOffset),
+        math.floor(faceY),
+        0,
+        attackScaleX,
+        attackScaleY,
+        math.floor(attackEffect.img:getWidth() / 2),
+        math.floor(attackEffect.img:getHeight() / 2)
+      )
+    end
   end
   gameStateManager:draw()
   

@@ -7,9 +7,10 @@ local pingPongManager = {
   rightPaddleSpeed = 120,
 }
 
-function pingPongManager:init(ballImg, paddleImg)
+function pingPongManager:init(ballImg, paddleImg, onScore)
   self.paddleImg = paddleImg
   self.ballImg = ballImg
+  self.onScore = onScore
   self.fieldX = canvasWidth / 2 - self.fieldWidth / 2
   self.fieldY = 10
 
@@ -40,11 +41,17 @@ function pingPongManager:init(ballImg, paddleImg)
       if evt.type == 'rebound-left' then
         if self:pointAgainst('player1', evt) then
           scoreManager:increasePlayerScore('player2')
+          if self.onScore then
+            self.onScore('player2')
+          end
           self:initBall(self.box)
         end
       elseif evt.type == 'rebound-right' then
         if self:pointAgainst('player2', evt) then
           scoreManager:increasePlayerScore('player1')
+          if self.onScore then
+            self.onScore('player1')
+          end
           self:initBall(self.box)
         end
       end
