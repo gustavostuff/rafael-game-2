@@ -30,10 +30,15 @@ local attackEffect = {
 }
 
 local function getAttackImage(typeName)
-  if not attackImages[typeName] then
-    attackImages[typeName] = love.graphics.newImage('attacks/' .. typeName .. '.png')
+  if attackImages[typeName] == nil then
+    local path = 'attacks/' .. typeName .. '.png'
+    if love.filesystem.getInfo(path) then
+      attackImages[typeName] = love.graphics.newImage(path)
+    else
+      attackImages[typeName] = false
+    end
   end
-  return attackImages[typeName]
+  return attackImages[typeName] or nil
 end
 
 local function triggerAttack(player)
@@ -49,10 +54,13 @@ local function triggerAttack(player)
 
   attackEffect.player = player
   attackEffect.img = getAttackImage(selected.type)
+  if not attackEffect.img then
+    return
+  end
   attackEffect.visible = true
   attackEffect.flipY = false
 
-  attackEffect.oscillateId = timerManager:every(0.25, function()
+  attackEffect.oscillateId = timerManager:every(0.15, function()
     attackEffect.flipY = not attackEffect.flipY
   end)
 
