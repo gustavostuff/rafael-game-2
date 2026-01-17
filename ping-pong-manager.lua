@@ -65,8 +65,8 @@ function pingPongManager:initBall(box)
     y = self.fieldHeight / 2,
     r = 6,
     box = box,
-    hv = 80,
-    vv = 90,
+    hv = 20,--80,
+    vv = 22,--90,
     energyLossByBounce = 0,
     energyLossByFriction = 0
   })
@@ -74,8 +74,23 @@ end
 
 function pingPongManager:pointAgainst(player, evt)
   local paddle = player == 'player1' and self.playerOnePaddle or self.playerTwoPaddle
-  
-  return not (evt.y >= paddle.y and evt.y <= paddle.y + self.paddleImg:getHeight())
+  local paddleTop = paddle.y
+  local paddleBottom = paddle.y + self.paddleImg:getHeight()
+  local ballRadius = self.ball.r
+  local y = evt.y
+
+  if y >= paddleTop and y <= paddleBottom then
+    return false
+  end
+
+  if y >= paddleTop - ballRadius and y <= paddleBottom + ballRadius then
+    if not self.ball:isBeyondTop() and not self.ball:isBeyondBottom() then
+      self.ball.vv = -self.ball.vv
+    end
+    return false
+  end
+
+  return true
 end
 
 function pingPongManager:update(dt)
@@ -165,6 +180,10 @@ end
 
 function pingPongManager:launchBall()
   self.ball.idle = false
+end
+
+function pingPongManager:resetBall()
+  self:initBall(self.box)
 end
 
 return pingPongManager

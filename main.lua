@@ -253,6 +253,9 @@ function love.keypressed(key)
     if key == 'space' then
       pingPongManager:launchBall()
     end
+    if key == 'r' then
+      pingPongManager:resetBall()
+    end
     if keys.isAnyOf(key, {'up', 'down', 'w', 's'}) then
       pingPongManager:keypressed(key)
     end
