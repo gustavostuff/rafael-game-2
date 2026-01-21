@@ -101,7 +101,7 @@ function love.load()
   local paddleImg = love.graphics.newImage('other/paddle.png')
   pingPongManager:init(ballImg, paddleImg, triggerAttack)
 
-  lifeIndicator = love.graphics.newImage('other/life_indicator.png')
+  scoreManager:init({ maxScore = 11 })
 end
 
 function love.update(dt)
@@ -188,14 +188,21 @@ function love.draw()
       pokemonPlayer2.facePosition.y
     )
 
-    -- draw life bar:
-
-    love.graphics.setColor(colors.white)
-    love.graphics.draw(lifeIndicator, 5, canvasHeight - 10)
-    love.graphics.draw(lifeIndicator, canvasWidth - lifeIndicator:getWidth() - 5, canvasHeight - 10)
-
     pingPongManager:draw()
     scoreManager:draw()
+
+    local countdown = pingPongManager:getLaunchCountdown()
+    if countdown and countdown > 0 then
+      local text = tostring(countdown)
+      love.graphics.setFont(bigFont)
+      love.graphics.setColor(colors.white)
+      love.graphics.print(
+        text,
+        (canvasWidth - bigFont:getWidth(text)) / 2,
+        (canvasHeight - bigFont:getHeight()) / 2
+      )
+      love.graphics.setFont(font)
+    end
 
     if attackEffect.visible and attackEffect.img and attackEffect.player then
       local faceX = attackEffect.player == 'player1' and 36 or canvasWidth - 36

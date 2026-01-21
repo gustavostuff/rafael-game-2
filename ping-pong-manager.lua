@@ -40,7 +40,7 @@ function pingPongManager:init(ballImg, paddleImg, onScore)
       -- scoreManager:increasePlayerScore(evt.type == 'rebound-left' and 'player2' or 'player1')
       if evt.type == 'rebound-left' then
         if self:pointAgainst('player1', evt) then
-          scoreManager:increasePlayerScore('player2')
+          scoreManager:decreasePlayerScore('player1')
           if self.onScore then
             self.onScore('player2')
           end
@@ -48,7 +48,7 @@ function pingPongManager:init(ballImg, paddleImg, onScore)
         end
       elseif evt.type == 'rebound-right' then
         if self:pointAgainst('player2', evt) then
-          scoreManager:increasePlayerScore('player1')
+          scoreManager:decreasePlayerScore('player2')
           if self.onScore then
             self.onScore('player1')
           end
@@ -60,16 +60,21 @@ function pingPongManager:init(ballImg, paddleImg, onScore)
 end
 
 function pingPongManager:initBall(box)
+  local hSign = love.math.random(0, 1) == 0 and -1 or 1
+  local vSign = love.math.random(0, 1) == 0 and -1 or 1
   self.ball = bb.newBall({
     x = self.fieldWidth / 2,
     y = self.fieldHeight / 2,
     r = 6,
     box = box,
-    hv = 20,--80,
-    vv = 22,--90,
+    hv = 80 * hSign,
+    vv = 90 * vSign,
+    -- hv = 20,
+    -- vv = 22,
     energyLossByBounce = 0,
     energyLossByFriction = 0
   })
+  self.launchTimer = 3
 end
 
 function pingPongManager:pointAgainst(player, evt)
@@ -94,6 +99,13 @@ function pingPongManager:pointAgainst(player, evt)
 end
 
 function pingPongManager:update(dt)
+  if self.ball.idle and self.launchTimer then
+    self.launchTimer = self.launchTimer - dt
+    if self.launchTimer <= 0 then
+      self:launchBall()
+    end
+  end
+
   bb.updateBall(self.ball, dt)
 
   -- move paddles
@@ -180,6 +192,14 @@ end
 
 function pingPongManager:launchBall()
   self.ball.idle = false
+  self.launchTimer = 0
+end
+
+function pingPongManager:getLaunchCountdown()
+  if not self.ball or not self.ball.idle or not self.launchTimer then
+    return nil
+  end
+  return math.max(0, math.ceil(self.launchTimer))
 end
 
 function pingPongManager:resetBall()
