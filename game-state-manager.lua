@@ -9,6 +9,7 @@ local gameStateManager = {
     SELECTION_SCREEN_P2 = 3,
     CONFIRM_SELECTION = 4,
     GAME = 5,
+    GAME_OVER = 6,
   },
   active = false,
   cb = nil

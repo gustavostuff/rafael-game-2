@@ -41,16 +41,24 @@ function pingPongManager:init(ballImg, paddleImg, onScore)
       if evt.type == 'rebound-left' then
         if self:pointAgainst('player1', evt) then
           scoreManager:decreasePlayerScore('player1')
+          local isGameOver = scoreManager:getPlayerScore('player1') <= 0
           if self.onScore then
-            self.onScore('player2')
+            self.onScore('player2', 'player1', isGameOver)
+          end
+          if isGameOver then
+            return
           end
           self:initBall(self.box)
         end
       elseif evt.type == 'rebound-right' then
         if self:pointAgainst('player2', evt) then
           scoreManager:decreasePlayerScore('player2')
+          local isGameOver = scoreManager:getPlayerScore('player2') <= 0
           if self.onScore then
-            self.onScore('player1')
+            self.onScore('player1', 'player2', isGameOver)
+          end
+          if isGameOver then
+            return
           end
           self:initBall(self.box)
         end

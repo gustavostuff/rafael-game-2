@@ -10,6 +10,10 @@ local resolutionManager = require 'resolution-manager'
 local scoreManager = require 'score-manager'
 local pingPongManager = require 'ping-pong-manager'
 local timerManager = require 'timer-manager'
+local gameOver = {
+  winner = nil,
+  loser = nil
+}
 
 local function getPokemonByName(name, list)
   for _, pokemon in pairs(list) do
@@ -76,6 +80,30 @@ local function triggerAttack(player)
   end)
 end
 
+local function handleScore(winner, loser, isGameOver)
+  if not isGameOver then
+    triggerAttack(winner)
+    return
+  end
+
+  gameOver.winner = winner
+  gameOver.loser = loser
+  pingPongManager:resetBall()
+  gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
+end
+
+local function resetGame()
+  gameOver.winner = nil
+  gameOver.loser = nil
+  scoreManager:resetScores()
+  pingPongManager:resetBall()
+  selectionScreen.selectedPokemon = {}
+  selectionScreen.pokemonGrid.currentPlayer = 1
+  selectionScreen.pokemonGrid:setSelectedPokemon(1, 1)
+  selectionScreen.pokemonGrid.verticalViewport = { y0 = 1, y1 = 4 }
+  selectionScreen.pokemonCard:setPokemon(selectionScreen.pokemonGrid:getSelectedPokemon())
+end
+
 function love.load()
   canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
   canvas:setFilter("nearest", "nearest")
@@ -99,7 +127,7 @@ function love.load()
   gameStateManager:init()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
-  pingPongManager:init(ballImg, paddleImg, triggerAttack)
+  pingPongManager:init(ballImg, paddleImg, handleScore)
 
   scoreManager:init({ maxScore = 11 })
 end
@@ -227,6 +255,28 @@ function love.draw()
         math.floor(attackEffect.img:getHeight() / 2)
       )
     end
+  elseif gameStateManager:stateIs(gameStateManager.states.GAME_OVER) then
+    love.graphics.setColor(colors.dark)
+    love.graphics.rectangle("fill", 0, 0, canvasWidth, canvasHeight)
+
+    local winnerLabel = gameOver.winner == 'player1' and 'P1' or 'P2'
+    local loserLabel = gameOver.loser == 'player1' and 'P1' or 'P2'
+    local title = winnerLabel .. " Wins!"
+    local subtitle = "Loser: " .. loserLabel .. "  |  Press Enter to reset"
+
+    love.graphics.setFont(bigFont)
+    love.graphics.setColor(colors.white)
+    love.graphics.print(
+      title,
+      (canvasWidth - bigFont:getWidth(title)) / 2,
+      (canvasHeight - bigFont:getHeight()) / 2 - 16
+    )
+    love.graphics.setFont(font)
+    love.graphics.print(
+      subtitle,
+      (canvasWidth - font:getWidth(subtitle)) / 2,
+      (canvasHeight - font:getHeight()) / 2 + 12
+    )
   end
   gameStateManager:draw()
   
@@ -254,7 +304,10 @@ function love.keypressed(key)
     end
   elseif gameStateManager.gameState == gameStateManager.states.CONFIRM_SELECTION then
     if keys.isEnterKey(key) then
-      gameStateManager:transitionTo(gameStateManager.states.GAME)
+      gameStateManager:transitionTo(gameStateManager.states.GAME, function ()
+        scoreManager:resetScores()
+        pingPongManager:resetBall()
+      end)
     end
   elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
     if key == 'space' then
@@ -265,6 +318,11 @@ function love.keypressed(key)
     end
     if keys.isAnyOf(key, {'up', 'down', 'w', 's'}) then
       pingPongManager:keypressed(key)
+    end
+  elseif gameStateManager:stateIs(gameStateManager.states.GAME_OVER) then
+    if keys.isEnterKey(key) then
+      resetGame()
+      gameStateManager:transitionTo(gameStateManager.states.SELECTION_SCREEN_P1)
     end
   else
     selectionScreen:keypressed(key, gameStateManager.gameState)
