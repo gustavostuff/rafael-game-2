@@ -1,4 +1,5 @@
 local bb = require 'lib.boinboin'
+local timerManager = require 'timer-manager'
 local scoreManager = require 'score-manager'
 local pingPongManager = {
   fieldWidth = 180,
@@ -22,6 +23,13 @@ function pingPongManager:init(ballImg, paddleImg, onScore)
     x = self.fieldX + self.fieldWidth,
     y = self.fieldY,
   }
+  self.leftUpPressed = false
+  self.leftDownPressed = false
+  self.rightUpPressed = false
+  self.rightDownPressed = false
+  self.launchDelayId = nil
+  self.launchCountdownId = nil
+  self.launchCountdown = nil
 
   bb.debug({
     lifespan = 2
@@ -68,6 +76,15 @@ function pingPongManager:init(ballImg, paddleImg, onScore)
 end
 
 function pingPongManager:initBall(box)
+  if self.launchDelayId then
+    timerManager:cancel(self.launchDelayId)
+    self.launchDelayId = nil
+  end
+  if self.launchCountdownId then
+    timerManager:cancel(self.launchCountdownId)
+    self.launchCountdownId = nil
+  end
+  self.launchCountdown = nil
   local hSign = love.math.random(0, 1) == 0 and -1 or 1
   local vSign = love.math.random(0, 1) == 0 and -1 or 1
   self.ball = bb.newBall({
@@ -82,7 +99,6 @@ function pingPongManager:initBall(box)
     energyLossByBounce = 0,
     energyLossByFriction = 0
   })
-  self.launchTimer = 3
 end
 
 function pingPongManager:pointAgainst(player, evt)
@@ -107,24 +123,17 @@ function pingPongManager:pointAgainst(player, evt)
 end
 
 function pingPongManager:update(dt)
-  if self.ball.idle and self.launchTimer then
-    self.launchTimer = self.launchTimer - dt
-    if self.launchTimer <= 0 then
-      self:launchBall()
-    end
-  end
-
   bb.updateBall(self.ball, dt)
 
   -- move paddles
-  local leftPaddleDirection = love.keyboard.isDown(keys.w) and -1 or 1
-  local rightPaddleDirection = love.keyboard.isDown(keys.up) and -1 or 1
+  local leftPaddleDirection = self.leftUpPressed and -1 or (self.leftDownPressed and 1 or 0)
+  local rightPaddleDirection = self.rightUpPressed and -1 or (self.rightDownPressed and 1 or 0)
 
-  if self.leftPaddleMoving then
+  if leftPaddleDirection ~= 0 then
     self.playerOnePaddle.y = self.playerOnePaddle.y + self.leftPaddleSpeed * dt * leftPaddleDirection
   end
 
-  if self.rightPaddleMoving then
+  if rightPaddleDirection ~= 0 then
     self.playerTwoPaddle.y = self.playerTwoPaddle.y + self.rightPaddleSpeed * dt * rightPaddleDirection
   end
 
@@ -183,35 +192,89 @@ function pingPongManager:draw()
 end
 
 function pingPongManager:keypressed(key)
-  if keys.isAnyOf(key, {'w', 's'}) then
-    self.leftPaddleMoving = true
-  elseif keys.isAnyOf(key, {'up', 'down'}) then
-    self.rightPaddleMoving = true
+  if key == 'w' then
+    self.leftUpPressed = true
+  elseif key == 's' then
+    self.leftDownPressed = true
+  elseif key == 'up' then
+    self.rightUpPressed = true
+  elseif key == 'down' then
+    self.rightDownPressed = true
   end
 end
 
 function pingPongManager:keyreleased(key)
-  if keys.isAnyOf(key, {'w', 's'}) then
-    self.leftPaddleMoving = false
-  elseif keys.isAnyOf(key, {'up', 'down'}) then
-    self.rightPaddleMoving = false
+  if key == 'w' then
+    self.leftUpPressed = false
+  elseif key == 's' then
+    self.leftDownPressed = false
+  elseif key == 'up' then
+    self.rightUpPressed = false
+  elseif key == 'down' then
+    self.rightDownPressed = false
   end
 end
 
 function pingPongManager:launchBall()
   self.ball.idle = false
-  self.launchTimer = 0
+  if self.launchDelayId then
+    timerManager:cancel(self.launchDelayId)
+    self.launchDelayId = nil
+  end
+  if self.launchCountdownId then
+    timerManager:cancel(self.launchCountdownId)
+    self.launchCountdownId = nil
+  end
+  self.launchCountdown = nil
+end
+
+function pingPongManager:startLaunchCountdown(delaySeconds)
+  if self.launchDelayId then
+    timerManager:cancel(self.launchDelayId)
+    self.launchDelayId = nil
+  end
+  if self.launchCountdownId then
+    timerManager:cancel(self.launchCountdownId)
+    self.launchCountdownId = nil
+  end
+
+  local function startCountdown()
+    self.launchCountdown = 3
+    self.launchCountdownId = timerManager:every(1, function()
+      self.launchCountdown = self.launchCountdown - 1
+      if self.launchCountdown <= 0 then
+        if self.launchCountdownId then
+          timerManager:cancel(self.launchCountdownId)
+          self.launchCountdownId = nil
+        end
+        self.launchCountdown = nil
+        self:launchBall()
+      end
+    end)
+  end
+
+  if delaySeconds and delaySeconds > 0 then
+    self.launchDelayId = timerManager:after(delaySeconds, function()
+      self.launchDelayId = nil
+      startCountdown()
+    end)
+  else
+    startCountdown()
+  end
 end
 
 function pingPongManager:getLaunchCountdown()
-  if not self.ball or not self.ball.idle or not self.launchTimer then
+  if not self.ball or not self.ball.idle or not self.launchCountdown then
     return nil
   end
-  return math.max(0, math.ceil(self.launchTimer))
+  return self.launchCountdown
 end
 
-function pingPongManager:resetBall()
+function pingPongManager:resetBall(startCountdown)
   self:initBall(self.box)
+  if startCountdown ~= false then
+    self:startLaunchCountdown(0)
+  end
 end
 
 return pingPongManager

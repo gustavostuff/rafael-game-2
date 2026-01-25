@@ -14,6 +14,8 @@ local gameOver = {
   winner = nil,
   loser = nil
 }
+local scoreSound = nil
+local attackDelayId = nil
 
 local function getPokemonByName(name, list)
   for _, pokemon in pairs(list) do
@@ -45,9 +47,14 @@ local function getAttackImage(typeName)
   return attackImages[typeName] or nil
 end
 
-local function triggerAttack(player)
+local function triggerAttack(player, onDone)
   local selected = selectionScreen.selectedPokemon[player]
-  if not selected or not selected.type then return end
+  if not selected or not selected.type then
+    if onDone then
+      onDone()
+    end
+    return
+  end
 
   if attackEffect.timeoutId then
     timerManager:cancel(attackEffect.timeoutId)
@@ -59,6 +66,11 @@ local function triggerAttack(player)
   attackEffect.player = player
   attackEffect.img = getAttackImage(selected.type)
   if not attackEffect.img then
+    attackEffect.player = nil
+    attackEffect.visible = false
+    if onDone then
+      onDone()
+    end
     return
   end
   attackEffect.visible = true
@@ -77,18 +89,36 @@ local function triggerAttack(player)
     attackEffect.visible = false
     attackEffect.player = nil
     attackEffect.img = nil
+    if onDone then
+      onDone()
+    end
   end)
 end
 
 local function handleScore(winner, loser, isGameOver)
+  if scoreSound then
+    scoreSound:stop()
+    scoreSound:play()
+  end
+
+  if attackDelayId then
+    timerManager:cancel(attackDelayId)
+    attackDelayId = nil
+  end
+
   if not isGameOver then
-    triggerAttack(winner)
+    attackDelayId = timerManager:after(1, function()
+      attackDelayId = nil
+      triggerAttack(winner, function()
+        pingPongManager:startLaunchCountdown(0)
+      end)
+    end)
     return
   end
 
   gameOver.winner = winner
   gameOver.loser = loser
-  pingPongManager:resetBall()
+  pingPongManager:resetBall(false)
   gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
 end
 
@@ -97,6 +127,22 @@ local function resetGame()
   gameOver.loser = nil
   scoreManager:resetScores()
   pingPongManager:resetBall()
+  if attackDelayId then
+    timerManager:cancel(attackDelayId)
+    attackDelayId = nil
+  end
+  if attackEffect.timeoutId then
+    timerManager:cancel(attackEffect.timeoutId)
+    attackEffect.timeoutId = nil
+  end
+  if attackEffect.oscillateId then
+    timerManager:cancel(attackEffect.oscillateId)
+    attackEffect.oscillateId = nil
+  end
+  attackEffect.visible = false
+  attackEffect.player = nil
+  attackEffect.img = nil
+  attackEffect.flipY = false
   selectionScreen.selectedPokemon = {}
   selectionScreen.pokemonGrid.currentPlayer = 1
   selectionScreen.pokemonGrid:setSelectedPokemon(1, 1)
@@ -123,13 +169,15 @@ function love.load()
   bgMusic = love.audio.newSource('bg-music.ogg', 'stream')
   bgMusic:setLooping(true)
   bgMusic:play()
+  scoreSound = love.audio.newSource('sounds/score.wav', 'static')
 
   gameStateManager:init()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
   pingPongManager:init(ballImg, paddleImg, handleScore)
 
-  scoreManager:init({ maxScore = 11 })
+  -- scoreManager:init({ maxScore = 11 })
+  scoreManager:init({ maxScore = 3 })
 end
 
 function love.update(dt)
