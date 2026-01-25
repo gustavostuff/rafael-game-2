@@ -131,7 +131,11 @@ function pokemonGrid:drawGrid()
   end
 
   love.graphics.setColor(colors.white)
-  love.graphics.print('Player ' .. self.currentPlayer ..' selection', 20, 5)
+  prettyPrint('Player ' .. self.currentPlayer ..' selection', 20, 5, {
+    cell = true,
+    color = colors.white,
+    bgColor = colors.black
+  })
 end
 
 -- Show helpful debug rectangles

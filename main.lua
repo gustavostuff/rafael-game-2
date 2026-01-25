@@ -10,12 +10,21 @@ local resolutionManager = require 'resolution-manager'
 local scoreManager = require 'score-manager'
 local pingPongManager = require 'ping-pong-manager'
 local timerManager = require 'timer-manager'
+local flux = require 'lib.flux'
 local gameOver = {
   winner = nil,
   loser = nil
 }
 local scoreSound = nil
 local attackDelayId = nil
+local pokemonPositions = {
+  player1 = { x = 0, y = 0 },
+  player2 = { x = 0, y = 0 }
+}
+local pokemonBasePositions = {
+  player1 = { x = 0, y = 0 },
+  player2 = { x = 0, y = 0 }
+}
 
 local function getPokemonByName(name, list)
   for _, pokemon in pairs(list) do
@@ -23,6 +32,27 @@ local function getPokemonByName(name, list)
       return pokemon
     end
   end
+end
+
+local function resetPokemonPositions()
+  local p1x = 36
+  local p2x = canvasWidth - 36
+  local py = canvasHeight / 2
+
+  if flux.tweens and flux.tweens[pokemonPositions.player1] then
+    flux:clear(pokemonPositions.player1, { x = true, y = true })
+  end
+  if flux.tweens and flux.tweens[pokemonPositions.player2] then
+    flux:clear(pokemonPositions.player2, { x = true, y = true })
+  end
+  pokemonPositions.player1.x = p1x
+  pokemonPositions.player1.y = py
+  pokemonPositions.player2.x = p2x
+  pokemonPositions.player2.y = py
+  pokemonBasePositions.player1.x = p1x
+  pokemonBasePositions.player1.y = py
+  pokemonBasePositions.player2.x = p2x
+  pokemonBasePositions.player2.y = py
 end
 
 local attackImages = {}
@@ -105,12 +135,33 @@ local function handleScore(winner, loser, isGameOver)
     timerManager:cancel(attackDelayId)
     attackDelayId = nil
   end
+  if flux.tweens and flux.tweens[pokemonPositions.player1] then
+    flux:clear(pokemonPositions.player1, { x = true })
+  end
+  if flux.tweens and flux.tweens[pokemonPositions.player2] then
+    flux:clear(pokemonPositions.player2, { x = true })
+  end
 
   if not isGameOver then
     attackDelayId = timerManager:after(1, function()
       attackDelayId = nil
-      triggerAttack(winner, function()
-        pingPongManager:startLaunchCountdown(0)
+      local attackerPos = pokemonPositions[winner]
+      local defenderPos = pokemonPositions[loser]
+      local targetX
+      if winner == 'player1' then
+        targetX = defenderPos.x - 100
+      else
+        targetX = defenderPos.x + 100
+      end
+
+      flux.to(attackerPos, 0.5, { x = targetX }):oncomplete(function()
+        triggerAttack(winner, function()
+          pingPongManager:startLaunchCountdown(0)
+          local baseX = pokemonBasePositions[winner].x
+          flux.to(attackerPos, 0.5, { x = baseX }):oncomplete(function()
+            resetPokemonPositions()
+          end)
+        end)
       end)
     end)
     return
@@ -148,6 +199,7 @@ local function resetGame()
   selectionScreen.pokemonGrid:setSelectedPokemon(1, 1)
   selectionScreen.pokemonGrid.verticalViewport = { y0 = 1, y1 = 4 }
   selectionScreen.pokemonCard:setPokemon(selectionScreen.pokemonGrid:getSelectedPokemon())
+  resetPokemonPositions()
 end
 
 function love.load()
@@ -178,6 +230,7 @@ function love.load()
 
   -- scoreManager:init({ maxScore = 11 })
   scoreManager:init({ maxScore = 3 })
+  resetPokemonPositions()
 end
 
 function love.update(dt)
@@ -186,6 +239,7 @@ function love.update(dt)
   if gameStateManager:stateIs(gameStateManager.states.GAME) then
     pingPongManager:update(dt)
     timerManager:update()
+    flux.update(dt)
   end
 end
 
@@ -212,8 +266,11 @@ function printDebugInfo()
   love.graphics.setFont(bigFont)
   love.graphics.setColor(colorWithAlpha("black", 0.5))
   love.graphics.rectangle("fill", 10, 10, 400, 300)
-  love.graphics.setColor(colors.white)
-  love.graphics.print(table.concat(items, '\n'), 20, 20)
+  prettyPrint(table.concat(items, '\n'), 20, 20, {
+    cell = true,
+    color = colors.white,
+    bgColor = colors.black
+  })
   love.graphics.setFont(font)
 end
 
@@ -234,19 +291,28 @@ function love.draw()
     love.graphics.setColor(colorWithAlpha("black", 0.5))
     love.graphics.rectangle("fill", 0, 0, canvasWidth, canvasHeight)
 
-    love.graphics.setColor(colors.white)
     local text = "Are you ready?"
-    love.graphics.print(text, (canvasWidth - font:getWidth(text)) / 2, (canvasHeight - font:getHeight()) / 2)
+    prettyPrint(text, nil, nil, {
+      cell = true,
+      centered = true,
+      vpw = canvasWidth,
+      vph = canvasHeight,
+      color = colors.white,
+      bgColor = colors.black
+    })
   elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
     local pokemonPlayer1 = getPokemonByName(selectionScreen.selectedPokemon['player1'].name, pokemonItems)
     local pokemonPlayer2 = getPokemonByName(selectionScreen.selectedPokemon['player2'].name, pokemonItems)
 
-    -- draw pokemon
+    pingPongManager:draw()
+    scoreManager:draw()
+
+    -- draw pokemon on top of the field
     love.graphics.setColor(colors.white)
     love.graphics.draw(
       pokemonPlayer1.image,
-      36,
-      canvasHeight / 2,
+      pokemonPositions.player1.x,
+      pokemonPositions.player1.y,
       0,
       -1,
       1,
@@ -255,8 +321,8 @@ function love.draw()
     )
     love.graphics.draw(
       pokemonPlayer2.image,
-      canvasWidth - 36,
-      canvasHeight / 2,
+      pokemonPositions.player2.x,
+      pokemonPositions.player2.y,
       0,
       1,
       1,
@@ -264,42 +330,37 @@ function love.draw()
       pokemonPlayer2.facePosition.y
     )
 
-    pingPongManager:draw()
-    scoreManager:draw()
-
     local countdown = pingPongManager:getLaunchCountdown()
     if countdown and countdown > 0 then
       local text = tostring(countdown)
       love.graphics.setFont(bigFont)
-      love.graphics.setColor(colors.white)
-      love.graphics.print(
-        text,
+      prettyPrint(text,
         (canvasWidth - bigFont:getWidth(text)) / 2,
-        (canvasHeight - bigFont:getHeight()) / 2
+        (canvasHeight - bigFont:getHeight()) / 2,
+        {
+          cell = true,
+          color = colors.white,
+          bgColor = colors.black
+        }
       )
       love.graphics.setFont(font)
     end
 
     if attackEffect.visible and attackEffect.img and attackEffect.player then
-      local faceX = attackEffect.player == 'player1' and 36 or canvasWidth - 36
-      local faceY = canvasHeight / 2
-      local attackOffset = 20
-      local attackScaleX = 1
+      local faceX = attackEffect.player == 'player1' and pokemonPositions.player1.x or pokemonPositions.player2.x
+      local faceY = attackEffect.player == 'player1' and pokemonPositions.player1.y or pokemonPositions.player2.y
+      local attackScaleX = attackEffect.player == 'player2' and -1 or 1
       local attackScaleY = attackEffect.flipY and -1 or 1
-
-      if attackEffect.player == 'player2' then
-        attackScaleX = -1
-        attackOffset = -attackOffset
-      end
+      local originX = 0
 
       love.graphics.draw(
         attackEffect.img,
-        math.floor(faceX + attackOffset),
+        math.floor(faceX),
         math.floor(faceY),
         0,
         attackScaleX,
         attackScaleY,
-        math.floor(attackEffect.img:getWidth() / 2),
+        originX,
         math.floor(attackEffect.img:getHeight() / 2)
       )
     end
@@ -309,21 +370,51 @@ function love.draw()
 
     local winnerLabel = gameOver.winner == 'player1' and 'P1' or 'P2'
     local loserLabel = gameOver.loser == 'player1' and 'P1' or 'P2'
-    local title = winnerLabel .. " Wins!"
-    local subtitle = "Loser: " .. loserLabel .. "  |  Press Enter to reset"
+    local titleLeft = winnerLabel
+    local titleRight = " Wins!"
+    local subtitleLeft = "Loser: "
+    local subtitleMid = loserLabel
+    local subtitleRight = "  |  Press Enter to reset"
+    local winnerColor = winnerLabel == 'P1' and colors.blue or colors.red
+    local loserColor = loserLabel == 'P1' and colors.blue or colors.red
 
     love.graphics.setFont(bigFont)
-    love.graphics.setColor(colors.white)
-    love.graphics.print(
-      title,
-      (canvasWidth - bigFont:getWidth(title)) / 2,
-      (canvasHeight - bigFont:getHeight()) / 2 - 16
-    )
+    local titleWidth = bigFont:getWidth(titleLeft) + bigFont:getWidth(titleRight)
+    local titleX = (canvasWidth - titleWidth) / 2
+    local titleY = (canvasHeight - bigFont:getHeight()) / 2 - 16
+    prettyPrint(titleLeft, titleX, titleY, {
+      cell = true,
+      color = winnerColor,
+      bgColor = colors.black
+    })
+    prettyPrint(titleRight, titleX + bigFont:getWidth(titleLeft), titleY, {
+      cell = true,
+      color = colors.white,
+      bgColor = colors.black
+    })
     love.graphics.setFont(font)
-    love.graphics.print(
-      subtitle,
-      (canvasWidth - font:getWidth(subtitle)) / 2,
-      (canvasHeight - font:getHeight()) / 2 + 12
+    local subtitleWidth = font:getWidth(subtitleLeft) + font:getWidth(subtitleMid) + font:getWidth(subtitleRight)
+    local subtitleX = (canvasWidth - subtitleWidth) / 2
+    local subtitleY = (canvasHeight - font:getHeight()) / 2 + 12
+    prettyPrint(subtitleLeft, subtitleX, subtitleY, {
+      cell = true,
+      color = colors.white,
+      bgColor = colors.black
+    })
+    prettyPrint(subtitleMid, subtitleX + font:getWidth(subtitleLeft), subtitleY, {
+      cell = true,
+      color = loserColor,
+      bgColor = colors.black
+    })
+    prettyPrint(
+      subtitleRight,
+      subtitleX + font:getWidth(subtitleLeft) + font:getWidth(subtitleMid),
+      subtitleY,
+      {
+        cell = true,
+        color = colors.yellow,
+        bgColor = colors.black
+      }
     )
   end
   gameStateManager:draw()
@@ -355,6 +446,7 @@ function love.keypressed(key)
       gameStateManager:transitionTo(gameStateManager.states.GAME, function ()
         scoreManager:resetScores()
         pingPongManager:resetBall()
+        resetPokemonPositions()
       end)
     end
   elseif gameStateManager:stateIs(gameStateManager.states.GAME) then

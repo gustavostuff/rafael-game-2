@@ -60,8 +60,11 @@ end
 function drawColorPalette()
   local index = 1
   for name, value in pairs(colors) do
-    love.graphics.setColor(colors.white)
-    love.graphics.print(name, 830, 10 + index * 20)
+    prettyPrint(name, 830, 10 + index * 20, {
+      cell = true,
+      color = colors.white,
+      bgColor = colors.black
+    })
 
     love.graphics.setColor(value)
     love.graphics.rectangle('fill', 800, 10 + index * 20, 20, 20)
