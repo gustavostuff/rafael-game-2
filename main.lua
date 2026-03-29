@@ -238,7 +238,7 @@ function love.load()
   pingPongManager:init(ballImg, paddleImg, handleScore, handlePaddleBounce)
 
   -- scoreManager:init({ maxScore = 11 })
-  scoreManager:init({ maxScore = 3 })
+  scoreManager:init({ maxScore = 10 })
   resetPokemonPositions()
 end
 

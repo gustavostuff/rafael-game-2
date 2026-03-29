@@ -6,6 +6,11 @@ local pingPongManager = {
   fieldHeight = 180 - 20,
   leftPaddleSpeed = 120,
   rightPaddleSpeed = 120,
+  baseBallHorizontalSpeed = 80,
+  baseBallVerticalSpeed = 90,
+  bouncesPerSpeedIncrease = 3,
+  ballSpeedIncreaseStep = 0.1,
+  maxBallSpeedMultiplier = 2,
 }
 
 function pingPongManager:init(ballImg, paddleImg, onScore, onPaddleBounce)
@@ -86,6 +91,7 @@ function pingPongManager:initBall(box)
     self.launchCountdownId = nil
   end
   self.launchCountdown = nil
+  self.paddleBounceCount = 0
   local hSign = love.math.random(0, 1) == 0 and -1 or 1
   local vSign = love.math.random(0, 1) == 0 and -1 or 1
   self.ball = bb.newBall({
@@ -93,13 +99,27 @@ function pingPongManager:initBall(box)
     y = self.fieldHeight / 2,
     r = 6,
     box = box,
-    hv = 80 * hSign,
-    vv = 90 * vSign,
+    hv = self.baseBallHorizontalSpeed * hSign,
+    vv = self.baseBallVerticalSpeed * vSign,
     -- hv = 20,
     -- vv = 22,
     energyLossByBounce = 0,
     energyLossByFriction = 0
   })
+end
+
+function pingPongManager:applyBounceSpeedIncrease()
+  local increaseSteps = math.floor(self.paddleBounceCount / self.bouncesPerSpeedIncrease)
+  local speedMultiplier = math.min(
+    1 + increaseSteps * self.ballSpeedIncreaseStep,
+    self.maxBallSpeedMultiplier
+  )
+
+  local horizontalSign = self.ball.hv < 0 and -1 or 1
+  local verticalSign = self.ball.vv < 0 and -1 or 1
+
+  self.ball.hv = self.baseBallHorizontalSpeed * speedMultiplier * horizontalSign
+  self.ball.vv = self.baseBallVerticalSpeed * speedMultiplier * verticalSign
 end
 
 function pingPongManager:pointAgainst(player, evt)
@@ -110,6 +130,8 @@ function pingPongManager:pointAgainst(player, evt)
   local y = evt.y
 
   if y >= paddleTop and y <= paddleBottom then
+    self.paddleBounceCount = self.paddleBounceCount + 1
+    self:applyBounceSpeedIncrease()
     if self.onPaddleBounce then
       self.onPaddleBounce()
     end
@@ -120,6 +142,8 @@ function pingPongManager:pointAgainst(player, evt)
     if not self.ball:isBeyondTop() and not self.ball:isBeyondBottom() then
       self.ball.vv = -self.ball.vv
     end
+    self.paddleBounceCount = self.paddleBounceCount + 1
+    self:applyBounceSpeedIncrease()
     if self.onPaddleBounce then
       self.onPaddleBounce()
     end
