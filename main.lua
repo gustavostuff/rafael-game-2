@@ -16,6 +16,7 @@ local gameOver = {
   loser = nil
 }
 local scoreSound = nil
+local paddleBounceSound = nil
 local attackDelayId = nil
 local pokemonPositions = {
   player1 = { x = 0, y = 0 },
@@ -173,6 +174,13 @@ local function handleScore(winner, loser, isGameOver)
   gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
 end
 
+local function handlePaddleBounce()
+  if paddleBounceSound then
+    paddleBounceSound:stop()
+    paddleBounceSound:play()
+  end
+end
+
 local function resetGame()
   gameOver.winner = nil
   gameOver.loser = nil
@@ -222,11 +230,12 @@ function love.load()
   bgMusic:setLooping(true)
   bgMusic:play()
   scoreSound = love.audio.newSource('sounds/score.wav', 'static')
+  paddleBounceSound = love.audio.newSource('sounds/pokeball_bounce.wav', 'static')
 
   gameStateManager:init()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
-  pingPongManager:init(ballImg, paddleImg, handleScore)
+  pingPongManager:init(ballImg, paddleImg, handleScore, handlePaddleBounce)
 
   -- scoreManager:init({ maxScore = 11 })
   scoreManager:init({ maxScore = 3 })

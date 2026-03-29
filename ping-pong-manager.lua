@@ -8,10 +8,11 @@ local pingPongManager = {
   rightPaddleSpeed = 120,
 }
 
-function pingPongManager:init(ballImg, paddleImg, onScore)
+function pingPongManager:init(ballImg, paddleImg, onScore, onPaddleBounce)
   self.paddleImg = paddleImg
   self.ballImg = ballImg
   self.onScore = onScore
+  self.onPaddleBounce = onPaddleBounce
   self.fieldX = canvasWidth / 2 - self.fieldWidth / 2
   self.fieldY = 10
 
@@ -109,12 +110,18 @@ function pingPongManager:pointAgainst(player, evt)
   local y = evt.y
 
   if y >= paddleTop and y <= paddleBottom then
+    if self.onPaddleBounce then
+      self.onPaddleBounce()
+    end
     return false
   end
 
   if y >= paddleTop - ballRadius and y <= paddleBottom + ballRadius then
     if not self.ball:isBeyondTop() and not self.ball:isBeyondBottom() then
       self.ball.vv = -self.ball.vv
+    end
+    if self.onPaddleBounce then
+      self.onPaddleBounce()
     end
     return false
   end
