@@ -1,5 +1,8 @@
 -- _G.loveDebug = true
 
+-- When true: shorter matches (1 life / bar per player) and faster ball.
+local TESTING_MODE = true
+
 require 'globals'
 require 'text'
 keys = require 'keys'
@@ -16,6 +19,9 @@ local gameOver = {
   winner = nil,
   loser = nil
 }
+local pendingUnlockPokemon = nil
+local victoryResetFeedbackT = 0
+local VICTORY_RESET_FEEDBACK_DURATION = 2.5
 local scoreSound = nil
 local paddleBounceSound = nil
 local attackDelayId = nil
@@ -171,11 +177,25 @@ local function handleScore(winner, loser, isGameOver)
 
   gameOver.winner = winner
   gameOver.loser = loser
+  local prevExtra = progressStorage:extraUnlockedCount()
   progressStorage:recordVictory(winner)
   progressStorage:save()
+  local unlockedName = progressStorage:nameJustUnlocked(prevExtra)
   progressStorage:applyLocks(selectionScreen.pokemonGrid.pokemonItems)
   pingPongManager:resetBall(false)
-  gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
+
+  if unlockedName then
+    pendingUnlockPokemon = getPokemonByName(unlockedName, pokemonItems)
+  else
+    pendingUnlockPokemon = nil
+  end
+
+  if unlockedName and pendingUnlockPokemon then
+    gameStateManager:transitionTo(gameStateManager.states.UNLOCK_REVEAL)
+  else
+    pendingUnlockPokemon = nil
+    gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
+  end
 end
 
 local function handlePaddleBounce()
@@ -241,15 +261,25 @@ function love.load()
   gameStateManager:init()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
+
+  if TESTING_MODE then
+    pingPongManager.baseBallHorizontalSpeed = 160
+    pingPongManager.baseBallVerticalSpeed = 180
+    scoreManager:init({ maxScore = 1 })
+  else
+    scoreManager:init({ maxScore = 10 })
+  end
   pingPongManager:init(ballImg, paddleImg, handleScore, handlePaddleBounce)
 
-  -- scoreManager:init({ maxScore = 11 })
-  scoreManager:init({ maxScore = 10 })
   resetPokemonPositions()
 end
 
 function love.update(dt)
   gameStateManager:update(dt)
+
+  if victoryResetFeedbackT > 0 then
+    victoryResetFeedbackT = math.max(0, victoryResetFeedbackT - dt)
+  end
 
   if gameStateManager:stateIs(gameStateManager.states.GAME) then
     pingPongManager:update(dt)
@@ -379,6 +409,45 @@ function love.draw()
         math.floor(attackEffect.img:getHeight() / 2)
       )
     end
+  elseif gameStateManager:stateIs(gameStateManager.states.UNLOCK_REVEAL) and pendingUnlockPokemon then
+    love.graphics.setColor(colors.dark)
+    love.graphics.rectangle("fill", 0, 0, canvasWidth, canvasHeight)
+
+    love.graphics.setFont(bigFont)
+    local title = "New Pokemon!"
+    prettyPrint(title,
+      (canvasWidth - bigFont:getWidth(title)) / 2,
+      16,
+      { cell = true, color = colors.yellow, bgColor = colors.black }
+    )
+
+    love.graphics.setFont(font)
+    local nameLine = toCapitalCase(pendingUnlockPokemon.name) .. "!"
+    prettyPrint(nameLine,
+      (canvasWidth - font:getWidth(nameLine)) / 2,
+      46,
+      { cell = true, color = colors.white, bgColor = colors.black }
+    )
+
+    love.graphics.setColor(colors.white)
+    love.graphics.draw(
+      pendingUnlockPokemon.image,
+      math.floor(canvasWidth / 2),
+      math.floor(canvasHeight / 2 + 10),
+      0,
+      1,
+      1,
+      pendingUnlockPokemon.facePosition.x,
+      pendingUnlockPokemon.facePosition.y
+    )
+
+    local hint = "Press Enter"
+    prettyPrint(hint,
+      (canvasWidth - font:getWidth(hint)) / 2,
+      canvasHeight - 26,
+      { cell = true, color = colors.yellow, bgColor = colors.black }
+    )
+    love.graphics.setFont(font)
   elseif gameStateManager:stateIs(gameStateManager.states.GAME_OVER) then
     love.graphics.setColor(colors.dark)
     love.graphics.rectangle("fill", 0, 0, canvasWidth, canvasHeight)
@@ -433,6 +502,27 @@ function love.draw()
     )
   end
   gameStateManager:draw()
+
+  if victoryResetFeedbackT > 0 then
+    love.graphics.setFont(font)
+    local msg = "Victory counts reset"
+    local rem = victoryResetFeedbackT
+    local fadeOut = 0.45
+    local a = rem < fadeOut and (rem / fadeOut) or 1
+    local pad = 6
+    local w = font:getWidth(msg) + pad * 2
+    local h = math.floor(font:getHeight() * 1.2) + pad * 2
+    local x = math.floor((canvasWidth - w) / 2)
+    local y = 10
+    love.graphics.setColor(0, 0, 0, 0.78 * a)
+    love.graphics.rectangle("fill", x, y, w, h, 4)
+    prettyPrint(msg, x + pad, y + pad, {
+      cell = true,
+      color = { colors.white[1], colors.white[2], colors.white[3], a },
+      bgColor = { colors.black[1], colors.black[2], colors.black[3], a },
+    })
+    love.graphics.setColor(colors.white)
+  end
   
   ---------------------------------------------------------------
   
@@ -444,6 +534,23 @@ function love.draw()
 end
 
 function love.keypressed(key)
+  local ctrl = love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl')
+  local shift = love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')
+  if key == 'r' and ctrl and shift then
+    progressStorage:clearVictories()
+    if selectionScreen.pokemonGrid and selectionScreen.pokemonGrid.pokemonItems then
+      progressStorage:applyLocks(selectionScreen.pokemonGrid.pokemonItems)
+      selectionScreen.pokemonGrid:selectFirstUnlocked()
+      selectionScreen.pokemonCard:setPokemon(selectionScreen.pokemonGrid:getSelectedPokemon())
+    end
+    victoryResetFeedbackT = VICTORY_RESET_FEEDBACK_DURATION
+    if paddleBounceSound then
+      paddleBounceSound:stop()
+      paddleBounceSound:play()
+    end
+    return
+  end
+
   if key == "escape" then
     love.event.quit()
   end
@@ -463,6 +570,11 @@ function love.keypressed(key)
         pingPongManager:resetBall()
         resetPokemonPositions()
       end)
+    end
+  elseif gameStateManager:stateIs(gameStateManager.states.UNLOCK_REVEAL) then
+    if keys.isEnterKey(key) then
+      pendingUnlockPokemon = nil
+      gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
     end
   elseif gameStateManager:stateIs(gameStateManager.states.GAME) then
     if key == 'space' then

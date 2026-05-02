@@ -10,6 +10,7 @@ local gameStateManager = {
     CONFIRM_SELECTION = 4,
     GAME = 5,
     GAME_OVER = 6,
+    UNLOCK_REVEAL = 7,
   },
   active = false,
   cb = nil

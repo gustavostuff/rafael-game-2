@@ -75,6 +75,20 @@ function progressStorage:isPokemonUnlocked(name)
   return false
 end
 
+function progressStorage:nameJustUnlocked(prevExtraUnlocked)
+  local newExtra = self:extraUnlockedCount()
+  if newExtra > prevExtraUnlocked then
+    return unlockOrder[newExtra]
+  end
+  return nil
+end
+
+function progressStorage:clearVictories()
+  self.data.victories.player1 = 0
+  self.data.victories.player2 = 0
+  self:save()
+end
+
 function progressStorage:applyLocks(pokemonItems)
   for _, pokemon in pairs(pokemonItems) do
     pokemon.locked = not self:isPokemonUnlocked(pokemon.name)
