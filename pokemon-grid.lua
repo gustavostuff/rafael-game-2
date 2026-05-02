@@ -10,6 +10,7 @@ local pokemonGrid = {
   pokemonItems  = {},   -- Will hold all Pokémon loaded
   debug         = false, -- Optionally toggle debug
   currentPlayer = 1,
+  lockedIcon    = nil,
 }
 
 local function getNumbersFromStringCoords(coords)
@@ -27,10 +28,47 @@ local function getPokemonData(pokemonFile)
   }
 end
 
+function pokemonGrid:syncViewportToCursor()
+  while self.cursor.y > self.verticalViewport.y1 do
+    self.verticalViewport.y0 = self.verticalViewport.y0 + 1
+    self.verticalViewport.y1 = self.verticalViewport.y1 + 1
+  end
+  while self.cursor.y < self.verticalViewport.y0 do
+    self.verticalViewport.y0 = self.verticalViewport.y0 - 1
+    self.verticalViewport.y1 = self.verticalViewport.y1 - 1
+  end
+end
+
+function pokemonGrid:selectFirstUnlocked()
+  for row = 1, self.gridRows do
+    for col = 1, self.gridColumns do
+      local p = self.pokemonItems[col .. "-" .. row]
+      if p and not p.locked then
+        self:setSelectedPokemon(col, row)
+        self:syncViewportToCursor()
+        return
+      end
+    end
+  end
+end
+
 -- Used by selectionScreen to init the grid
-function pokemonGrid:init(pokemonDirectory)
+function pokemonGrid:init(pokemonDirectory, progressStorage)
   -- Load the list of files in the directory
-  local fileList      = love.filesystem.getDirectoryItems(pokemonDirectory)
+  local fileList = love.filesystem.getDirectoryItems(pokemonDirectory)
+  table.sort(fileList, function(a, b)
+    if not progressStorage then
+      return a < b
+    end
+    local nameA = getPokemonData(a).name
+    local nameB = getPokemonData(b).name
+    local openA = progressStorage:isPokemonUnlocked(nameA)
+    local openB = progressStorage:isPokemonUnlocked(nameB)
+    if openA ~= openB then
+      return openA
+    end
+    return a < b
+  end)
   self.gridRows       = math.ceil(#fileList / self.gridColumns)
   local index         = 1
 
@@ -52,7 +90,8 @@ function pokemonGrid:init(pokemonDirectory)
         gridY        = row,
         facePosition = pData.facePosition,
         imageWidth   = image:getWidth(),
-        imageHeight  = image:getHeight()
+        imageHeight  = image:getHeight(),
+        locked       = false,
       }
       index = index + 1
     end
@@ -64,6 +103,15 @@ function pokemonGrid:init(pokemonDirectory)
   self.selectionGridHeight = self.gridRows    * self.cellOffset
   self.selectionGridX      = 20
   self.selectionGridY      = 21
+
+  if not self.lockedIcon and love.filesystem.getInfo('ui/locked.png') then
+    self.lockedIcon = love.graphics.newImage('ui/locked.png')
+  end
+
+  if progressStorage then
+    progressStorage:applyLocks(self.pokemonItems)
+    self:selectFirstUnlocked()
+  end
 
   return self.pokemonItems
 end
@@ -114,7 +162,11 @@ function pokemonGrid:drawGrid()
       -- Cell background
       love.graphics.setColor(colors.gray)
       love.graphics.rectangle("fill", cellX, cellY, self.gridCellSize, self.gridCellSize)
-      love.graphics.setColor(colors.white)
+      if pokemon.locked then
+        love.graphics.setColor(0, 0, 0, 1)
+      else
+        love.graphics.setColor(colors.white)
+      end
 
       -- Draw face
       love.graphics.draw(
@@ -125,6 +177,15 @@ function pokemonGrid:drawGrid()
         math.floor(pokemon.facePosition.x),
         math.floor(pokemon.facePosition.y)
       )
+
+      if pokemon.locked and self.lockedIcon then
+        love.graphics.setColor(colors.white)
+        local iw = self.lockedIcon:getWidth()
+        local ih = self.lockedIcon:getHeight()
+        local lx = math.floor(cellX + (self.gridCellSize - iw) / 2)
+        local ly = math.floor(cellY + (self.gridCellSize - ih) / 2)
+        love.graphics.draw(self.lockedIcon, lx, ly)
+      end
 
       love.graphics.setStencilTest()
     end

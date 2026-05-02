@@ -10,10 +10,10 @@ local selectionScreen = {
   selectedPokemon = {}
 }
 
-function selectionScreen:init(pokemonDirectory)
+function selectionScreen:init(pokemonDirectory, progressStorage)
   -- 1) Init the grid module
   pokemonGrid.debug = self.debug
-  local pokemonItems = pokemonGrid:init(pokemonDirectory)
+  local pokemonItems = pokemonGrid:init(pokemonDirectory, progressStorage)
   self.pokemonGrid = pokemonGrid
 
   -- 2) Init the card module
@@ -84,10 +84,14 @@ function selectionScreen:keypressed(key, gameState)
     self:moveCursor(key)
 
     if keys.isEnterKey(key) then
+      local sel = self.pokemonGrid:getSelectedPokemon()
+      if sel and sel.locked then
+        return
+      end
       gameStateManager:transitionTo(gameStateManager.states.SELECTION_SCREEN_P2, function ()
         self.selectedPokemon['player' .. self.pokemonGrid.currentPlayer] = self.pokemonGrid:getSelectedPokemon()
-        self.pokemonGrid:setSelectedPokemon(1, 1)
         self.pokemonGrid.verticalViewport = { y0 = 1, y1 = 4 }
+        self.pokemonGrid:selectFirstUnlocked()
         self.pokemonCard:setPokemon(self.pokemonGrid:getSelectedPokemon())
         self.pokemonGrid.currentPlayer = 2
       end)
@@ -95,6 +99,10 @@ function selectionScreen:keypressed(key, gameState)
   elseif gameState == gameStateManager.states.SELECTION_SCREEN_P2 then
     self:moveCursor(key)
     if keys.isEnterKey(key) then
+      local sel = self.pokemonGrid:getSelectedPokemon()
+      if sel and sel.locked then
+        return
+      end
       gameStateManager:transitionTo(gameStateManager.states.CONFIRM_SELECTION, function ()
         self.selectedPokemon['player' .. self.pokemonGrid.currentPlayer] = self.pokemonGrid:getSelectedPokemon()
       end)

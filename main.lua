@@ -6,6 +6,7 @@ keys = require 'keys'
 
 local gameStateManager = require 'game-state-manager'
 local selectionScreen = require 'selection-screen'
+local progressStorage = require 'progress-storage'
 local resolutionManager = require 'resolution-manager'
 local scoreManager = require 'score-manager'
 local pingPongManager = require 'ping-pong-manager'
@@ -170,6 +171,9 @@ local function handleScore(winner, loser, isGameOver)
 
   gameOver.winner = winner
   gameOver.loser = loser
+  progressStorage:recordVictory(winner)
+  progressStorage:save()
+  progressStorage:applyLocks(selectionScreen.pokemonGrid.pokemonItems)
   pingPongManager:resetBall(false)
   gameStateManager:transitionTo(gameStateManager.states.GAME_OVER)
 end
@@ -204,8 +208,9 @@ local function resetGame()
   attackEffect.flipY = false
   selectionScreen.selectedPokemon = {}
   selectionScreen.pokemonGrid.currentPlayer = 1
-  selectionScreen.pokemonGrid:setSelectedPokemon(1, 1)
+  progressStorage:applyLocks(selectionScreen.pokemonGrid.pokemonItems)
   selectionScreen.pokemonGrid.verticalViewport = { y0 = 1, y1 = 4 }
+  selectionScreen.pokemonGrid:selectFirstUnlocked()
   selectionScreen.pokemonCard:setPokemon(selectionScreen.pokemonGrid:getSelectedPokemon())
   resetPokemonPositions()
 end
@@ -215,7 +220,8 @@ function love.load()
   canvas:setFilter("nearest", "nearest")
 
   resolutionManager:init(canvas)
-  pokemonItems = selectionScreen:init("pokemon/")
+  progressStorage:load()
+  pokemonItems = selectionScreen:init("pokemon/", progressStorage)
 
   font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
   bigFont = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 32)

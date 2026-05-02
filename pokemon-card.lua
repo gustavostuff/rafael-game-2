@@ -68,9 +68,15 @@ function pokemonCard:setPokemon(pokemon)
   self.selectedPokemon = pokemon
 
   if pokemon then
-    self.cardColor   = getPokemonColor(pokemon.type)
-    self.displayName = "Name: " .. toCapitalCase(pokemon.name)
-    self.displayType = "Type: " .. toCapitalCase(pokemon.type)
+    if pokemon.locked then
+      self.cardColor   = colors.darkGray
+      self.displayName = "Name: ???"
+      self.displayType = "Type: ???"
+    else
+      self.cardColor   = getPokemonColor(pokemon.type)
+      self.displayName = "Name: " .. toCapitalCase(pokemon.name)
+      self.displayType = "Type: " .. toCapitalCase(pokemon.type)
+    end
   else
     self.cardColor   = colors.white
     self.displayName = nil
@@ -91,10 +97,14 @@ function pokemonCard:draw()
                           self.innerRectW, self.innerRectH)
 
   -- Draw Pokémon in center region
-  love.graphics.setColor(colors.white)
+  if self.selectedPokemon.locked then
+    love.graphics.setColor(0, 0, 0, 1)
+  else
+    love.graphics.setColor(colors.white)
+  end
   love.graphics.setScissor(self.innerRectX, self.innerRectY,
                            self.innerRectW, self.innerRectH)
-  
+
   love.graphics.draw(
     self.selectedPokemon.image,
     self.pokemonX,
@@ -103,6 +113,7 @@ function pokemonCard:draw()
     math.floor(self.selectedPokemon.imageWidth / 2),
     math.floor(self.selectedPokemon.imageHeight / 2)
   )
+
   love.graphics.setScissor()
 
   -- Draw text
@@ -116,6 +127,7 @@ function pokemonCard:draw()
     color  = colors.almostWhite,
     bgColor= colors.dark
   })
+  love.graphics.setColor(colors.white)
 end
 
 return pokemonCard
