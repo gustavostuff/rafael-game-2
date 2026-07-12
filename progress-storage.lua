@@ -62,6 +62,10 @@ function progressStorage:extraUnlockedCount()
 end
 
 function progressStorage:isPokemonUnlocked(name)
+  if TESTING_MODE then
+    return true
+  end
+
   local n = string.lower(name)
   if STARTERS[n] then
     return true

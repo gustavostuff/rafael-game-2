@@ -1,8 +1,5 @@
 -- _G.loveDebug = true
 
--- When true: shorter matches (1 life / bar per player) and faster ball.
-local TESTING_MODE = false
-
 require 'globals'
 require 'text'
 keys = require 'keys'
@@ -43,13 +40,13 @@ function love.load()
   local ballImg = love.graphics.newImage('other/pokeball.png')
   local paddleImg = love.graphics.newImage('other/paddle.png')
 
-  if TESTING_MODE then
-    pingPongManager.baseBallHorizontalSpeed = 160
-    pingPongManager.baseBallVerticalSpeed = 180
-    scoreManager:init({ maxScore = 1 })
-  else
-    scoreManager:init({ maxScore = 10 })
-  end
+  -- if TESTING_MODE then
+  --   pingPongManager.baseBallHorizontalSpeed = 160
+  --   pingPongManager.baseBallVerticalSpeed = 180
+  --   scoreManager:init({ maxScore = 1 })
+  -- else
+  --   scoreManager:init({ maxScore = 10 })
+  -- end
 
   matchManager:init(pingPongManager, scoreManager, selectionScreen, pokemonItems)
   pingPongManager:init(ballImg, paddleImg, function(winner, loser, isGameOver)

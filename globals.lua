@@ -3,6 +3,9 @@ canvasWidth = 320 * defaultCanvasScale
 canvasHeight = 180 * defaultCanvasScale
 lineHeight = 1.2
 
+-- When true: shorter matches, faster ball, all Pokémon selectable.
+TESTING_MODE = true
+
 font = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 16)
 -- bigFont = love.graphics.newFont('fonts/proggy-tiny/proggy-tiny.ttf', 32)
 
