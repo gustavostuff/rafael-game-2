@@ -1,7 +1,7 @@
 -- _G.loveDebug = true
 
 -- When true: shorter matches (1 life / bar per player) and faster ball.
-local TESTING_MODE = true
+local TESTING_MODE = false
 
 require 'globals'
 require 'text'
@@ -20,8 +20,6 @@ local gameOver = {
   loser = nil
 }
 local pendingUnlockPokemon = nil
-local victoryResetFeedbackT = 0
-local VICTORY_RESET_FEEDBACK_DURATION = 2.5
 local scoreSound = nil
 local paddleBounceSound = nil
 local attackDelayId = nil
@@ -277,10 +275,6 @@ end
 function love.update(dt)
   gameStateManager:update(dt)
 
-  if victoryResetFeedbackT > 0 then
-    victoryResetFeedbackT = math.max(0, victoryResetFeedbackT - dt)
-  end
-
   if gameStateManager:stateIs(gameStateManager.states.GAME) then
     pingPongManager:update(dt)
     timerManager:update()
@@ -502,27 +496,6 @@ function love.draw()
     )
   end
   gameStateManager:draw()
-
-  if victoryResetFeedbackT > 0 then
-    love.graphics.setFont(font)
-    local msg = "Victory counts reset"
-    local rem = victoryResetFeedbackT
-    local fadeOut = 0.45
-    local a = rem < fadeOut and (rem / fadeOut) or 1
-    local pad = 6
-    local w = font:getWidth(msg) + pad * 2
-    local h = math.floor(font:getHeight() * 1.2) + pad * 2
-    local x = math.floor((canvasWidth - w) / 2)
-    local y = 10
-    love.graphics.setColor(0, 0, 0, 0.78 * a)
-    love.graphics.rectangle("fill", x, y, w, h, 4)
-    prettyPrint(msg, x + pad, y + pad, {
-      cell = true,
-      color = { colors.white[1], colors.white[2], colors.white[3], a },
-      bgColor = { colors.black[1], colors.black[2], colors.black[3], a },
-    })
-    love.graphics.setColor(colors.white)
-  end
   
   ---------------------------------------------------------------
   
@@ -537,16 +510,27 @@ function love.keypressed(key)
   local ctrl = love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl')
   local shift = love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')
   if key == 'r' and ctrl and shift then
-    progressStorage:clearVictories()
-    if selectionScreen.pokemonGrid and selectionScreen.pokemonGrid.pokemonItems then
-      progressStorage:applyLocks(selectionScreen.pokemonGrid.pokemonItems)
-      selectionScreen.pokemonGrid:selectFirstUnlocked()
-      selectionScreen.pokemonCard:setPokemon(selectionScreen.pokemonGrid:getSelectedPokemon())
-    end
-    victoryResetFeedbackT = VICTORY_RESET_FEEDBACK_DURATION
-    if paddleBounceSound then
-      paddleBounceSound:stop()
-      paddleBounceSound:play()
+    local choice = love.window.showMessageBox(
+      "Reset progress",
+      "Reset all unlocked Pokémon and victory count?",
+      { "Cancel", "Reset" },
+      "warning",
+      true
+    )
+    if choice == 2 then
+      progressStorage:clearVictories()
+      if selectionScreen.pokemonGrid and selectionScreen.pokemonGrid.pokemonItems then
+        progressStorage:applyLocks(selectionScreen.pokemonGrid.pokemonItems)
+        selectionScreen.pokemonGrid:selectFirstUnlocked()
+        selectionScreen.pokemonCard:setPokemon(selectionScreen.pokemonGrid:getSelectedPokemon())
+      end
+      love.window.showMessageBox(
+        "Reset complete",
+        "Everything has been reset.",
+        { "OK" },
+        "info",
+        true
+      )
     end
     return
   end

@@ -160,7 +160,7 @@ function pokemonGrid:drawGrid()
       love.graphics.setStencilTest("greater", 0)
 
       -- Cell background
-      love.graphics.setColor(colors.gray)
+      love.graphics.setColor(colors.darkGray)
       love.graphics.rectangle("fill", cellX, cellY, self.gridCellSize, self.gridCellSize)
       if pokemon.locked then
         love.graphics.setColor(0, 0, 0, 1)
@@ -178,14 +178,14 @@ function pokemonGrid:drawGrid()
         math.floor(pokemon.facePosition.y)
       )
 
-      if pokemon.locked and self.lockedIcon then
-        love.graphics.setColor(colors.white)
-        local iw = self.lockedIcon:getWidth()
-        local ih = self.lockedIcon:getHeight()
-        local lx = math.floor(cellX + (self.gridCellSize - iw) / 2)
-        local ly = math.floor(cellY + (self.gridCellSize - ih) / 2)
-        love.graphics.draw(self.lockedIcon, lx, ly)
-      end
+      -- if pokemon.locked and self.lockedIcon then
+      --   love.graphics.setColor(colors.white)
+      --   local iw = self.lockedIcon:getWidth()
+      --   local ih = self.lockedIcon:getHeight()
+      --   local lx = math.floor(cellX + (self.gridCellSize - iw) / 2)
+      --   local ly = math.floor(cellY + (self.gridCellSize - ih) / 2)
+      --   love.graphics.draw(self.lockedIcon, lx, ly)
+      -- end
 
       love.graphics.setStencilTest()
     end
