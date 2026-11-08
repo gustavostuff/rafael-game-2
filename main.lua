@@ -18,6 +18,7 @@ local matchManager = require 'match-manager'
 local gameScreen = require 'game-screen'
 local postGameScreens = require 'post-game-screens'
 local debugOverlay = require 'debug-overlay'
+local taoTrioCutscene = require 'tao-trio-cutscene'
 
 function love.load()
   canvas = love.graphics.newCanvas(canvasWidth, canvasHeight)
@@ -47,6 +48,7 @@ function love.load()
   -- else
   --   scoreManager:init({ maxScore = 10 })
   -- end
+  scoreManager:init({ maxScore = 10 })
 
   matchManager:init(pingPongManager, scoreManager, selectionScreen, pokemonItems)
   pingPongManager:init(ballImg, paddleImg, function(winner, loser, isGameOver)
@@ -153,6 +155,7 @@ function love.keypressed(key)
     if keys.isEnterKey(key) then
       gameStateManager:transitionTo(gameStateManager.states.GAME, function()
         scoreManager:resetScores()
+        taoTrioCutscene:resetMatch()
         pingPongManager:resetBall()
         pokemonField:reset()
       end)

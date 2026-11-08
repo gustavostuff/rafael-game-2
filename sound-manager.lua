@@ -3,7 +3,7 @@ local soundManager = {}
 function soundManager:init()
   love.audio.setVolume(1)
   self.bgMusic = love.audio.newSource('bg-music.ogg', 'stream')
-  self.bgMusic:setVolume(0.5)
+  self.bgMusic:setVolume(0.3)
   self.bgMusic:setLooping(true)
   self.bgMusic:play()
   self.scoreSound = love.audio.newSource('sounds/score.wav', 'static')

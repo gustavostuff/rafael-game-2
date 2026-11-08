@@ -50,10 +50,14 @@ function pingPongManager:init(ballImg, paddleImg, onScore, onPaddleBounce)
   self:initBall(self.box)
 
   bb.onEvent = function(evt)
+    if self.scoredThisUpdate then
+      return
+    end
     if evt.type == 'rebound-left' or evt.type == 'rebound-right' then
       -- scoreManager:increasePlayerScore(evt.type == 'rebound-left' and 'player2' or 'player1')
       if evt.type == 'rebound-left' then
         if self:pointAgainst('player1', evt) then
+          self.scoredThisUpdate = true
           scoreManager:decreasePlayerScore('player1')
           local isGameOver = scoreManager:getPlayerScore('player1') <= 0
           if self.onScore then
@@ -66,6 +70,7 @@ function pingPongManager:init(ballImg, paddleImg, onScore, onPaddleBounce)
         end
       elseif evt.type == 'rebound-right' then
         if self:pointAgainst('player2', evt) then
+          self.scoredThisUpdate = true
           scoreManager:decreasePlayerScore('player2')
           local isGameOver = scoreManager:getPlayerScore('player2') <= 0
           if self.onScore then
@@ -154,6 +159,10 @@ function pingPongManager:pointAgainst(player, evt)
 end
 
 function pingPongManager:update(dt)
+  self.scoredThisUpdate = false
+  if self.cutsceneFrozen then
+    return
+  end
   bb.updateBall(self.ball, dt)
 
   -- move paddles
@@ -247,6 +256,12 @@ function pingPongManager:keyreleased(key)
 end
 
 function pingPongManager:launchBall()
+  if self.cutsceneFrozen then
+    return
+  end
+  if not self.ball then
+    return
+  end
   self.ball.idle = false
   if self.launchDelayId then
     timerManager:cancel(self.launchDelayId)
@@ -302,6 +317,9 @@ function pingPongManager:getLaunchCountdown()
 end
 
 function pingPongManager:resetBall(startCountdown)
+  if self.cutsceneFrozen then
+    return
+  end
   self:initBall(self.box)
   if startCountdown ~= false then
     self:startLaunchCountdown(0)

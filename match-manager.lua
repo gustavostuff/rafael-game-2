@@ -5,6 +5,7 @@ local pokemonField = require 'pokemon-field'
 local soundManager = require 'sound-manager'
 local progressStorage = require 'progress-storage'
 local gameStateManager = require 'game-state-manager'
+local taoTrioCutscene = require 'tao-trio-cutscene'
 
 local matchManager = {
   gameOver = {
@@ -20,6 +21,7 @@ function matchManager:init(pingPongManager, scoreManager, selectionScreen, pokem
   self.scoreManager = scoreManager
   self.selectionScreen = selectionScreen
   self.pokemonItems = pokemonItems
+  taoTrioCutscene:init(pokemonItems, pingPongManager)
 end
 
 function matchManager:onScore(winner, loser, isGameOver)
@@ -29,11 +31,27 @@ function matchManager:onScore(winner, loser, isGameOver)
     timerManager:cancel(self.attackDelayId)
     self.attackDelayId = nil
   end
+  attackManager:reset()
   pokemonField:clearTweens()
 
+  if taoTrioCutscene:isActive() then
+    return
+  end
+
   if not isGameOver then
+    if taoTrioCutscene:shouldTrigger(self.selectionScreen, self.scoreManager) then
+      taoTrioCutscene:start(self.pingPongManager, function()
+        self.pingPongManager:startLaunchCountdown(0)
+      end)
+      return
+    end
+
     self.attackDelayId = timerManager:after(1, function()
       self.attackDelayId = nil
+      if taoTrioCutscene:isActive() then
+        return
+      end
+
       local attackerPos = pokemonField.positions[winner]
       local defenderPos = pokemonField.positions[loser]
       local targetX
@@ -46,9 +64,15 @@ function matchManager:onScore(winner, loser, isGameOver)
       flux.to(attackerPos, 0.5, { x = targetX }):oncomplete(function()
         local selected = self.selectionScreen.selectedPokemon[winner]
         attackManager:trigger(winner, selected, function()
+          if taoTrioCutscene:isActive() then
+            return
+          end
           self.pingPongManager:startLaunchCountdown(0)
           local baseX = pokemonField.basePositions[winner].x
           flux.to(attackerPos, 0.5, { x = baseX }):oncomplete(function()
+            if taoTrioCutscene:isActive() then
+              return
+            end
             pokemonField:reset()
           end)
         end)
@@ -84,6 +108,7 @@ function matchManager:resetGame()
   self.gameOver.winner = nil
   self.gameOver.loser = nil
   self.scoreManager:resetScores()
+  taoTrioCutscene:resetMatch()
   self.pingPongManager:resetBall()
 
   if self.attackDelayId then

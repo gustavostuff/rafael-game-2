@@ -12,11 +12,17 @@ local pokemonField = {
 }
 
 function pokemonField:clearTweens()
-  if flux.tweens and flux.tweens[self.positions.player1] then
-    flux:clear(self.positions.player1, { x = true, y = true })
+  local tweens = flux.tweens
+  if not tweens then
+    return
   end
-  if flux.tweens and flux.tweens[self.positions.player2] then
-    flux:clear(self.positions.player2, { x = true, y = true })
+  for _, pos in ipairs({ self.positions.player1, self.positions.player2 }) do
+    local bucket = tweens[pos]
+    if bucket then
+      for tween in pairs(bucket) do
+        flux.remove(tween)
+      end
+    end
   end
 end
 

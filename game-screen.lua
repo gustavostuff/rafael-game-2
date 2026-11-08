@@ -1,5 +1,6 @@
 local attackManager = require 'attack-manager'
 local pokemonField = require 'pokemon-field'
+local taoTrioCutscene = require 'tao-trio-cutscene'
 
 local gameScreen = {}
 
@@ -16,6 +17,7 @@ function gameScreen:draw(pingPongManager, scoreManager, selectionScreen, pokemon
   pingPongManager:draw()
   scoreManager:draw()
   pokemonField:draw(pokemonPlayer1, pokemonPlayer2)
+  taoTrioCutscene:draw()
 
   local countdown = pingPongManager:getLaunchCountdown()
   if countdown and countdown > 0 then
